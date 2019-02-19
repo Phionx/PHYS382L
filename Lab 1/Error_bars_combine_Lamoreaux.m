@@ -8,9 +8,9 @@
 %Setup File Name
 date_acquired      = '20190219'; %Date of Data Acquisition
 date_written       = '20190219'; %Date of Data Analysis
-tunneling_type     = 'NIN';%1: SIN, 2: NIN, 3: SIS
-junction_type      = '1';%1,2, or 3
-trial              = '0';%Made so we can cleanly store data, positive trials are forward sweeps, negative trials are backwards sweeps
+tunneling_type     = 'SIS';%1: SIN, 2: NIN, 3: SIS
+junction_type      = '3';%1,2, or 3
+trial              = '2';%Made so we can cleanly store data, positive trials are forward sweeps, negative trials are backwards sweeps
 
 
 file_reading              = strcat('measurementsAnalysis/LamoreauxErrorBars/', date_acquired, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial), '.csv');

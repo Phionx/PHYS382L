@@ -2,15 +2,15 @@ clear all;
 close all;
 %Setup File Name
 clear;
-date                    = '20190212'; %Date
-date_written            = '20190218'; %Date Fitted
+date                    = '20190219'; %Date
+date_written            = '20190219'; %Date Fitted
 tunneling_type          =      'SIN'; %1: SIN, 2: NIN, 3: SIS
 junction_type           =        '2'; %1,2, or 3
 trial                   =        '0'; %Just so we can cleanly store data, positive trials are forward sweeps, negative trials are backwards sweeps
 
 %File Names
-file_read               = strcat('measurementsAnalysis/CombinedErrorBars/', date, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial), '.csv');
-file_write              = strcat('FitFigures/', date_written, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial));
+file_read               = strcat('Data/measurementsAnalysis/LamoreauxCombinedErrorBars/', date, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial), '.csv');
+file_write              = strcat('Figures/FitFigures20190219/', date_written, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial));
 
 data                    = csvread(file_read);
 global Input_V_j;
