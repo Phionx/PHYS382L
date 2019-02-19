@@ -1,0 +1,52 @@
+ai=analoginput('nidaq','dev1');
+
+dio=digitalio('nidaq', 'dev1');
+
+ao=analogoutput('nidaq','dev1');
+
+%Settings
+%--------------------------------------------------------------------------
+regime             = ;%1: SIN,2: NIN,3: SIS
+trial              = ;%Just so we can cleanly store data
+max_V_Output        = ;%maximum output voltage
+min_V_Output       = ;%minimum output voltage
+increment          = ;%step size in our output voltage
+measurement_length = round((maxv-minv)/increment)+1;%step number    
+direction          = ;%+1 for positive sweep and -1 for negative sweep
+R_v                = ; %Variable Resistance
+gain               = ;%gain from amplifier
+precision          = ;%uncertainty of output voltage
+
+%Data Acquisition
+%--------------------------------------------------------------------------
+Output_V_c         = lin_space(min_V_Output, max_V_Output, measurement_length);
+Error_Output_V_c   = zeros(1,measurement_length) + precision;
+
+%Use V_c (output voltage) to get I_j (current across junction) = I_tot
+Current_I_j        = Output_V_c/R_v;
+Error_Current_I_j  = ;
+
+Input_V_j          = zeros(1,measurement_length);
+Error_Input_V_j    = zeros(1,measurement_length);
+
+
+
+i = 1;
+if direction == +1
+    curr = minv;
+elseif direction == -1
+    curr = maxv;
+end
+
+while i < measurement_length
+    %set curr voltage
+    %meas = 
+    Output_V_j(1,i) = meas/gain;
+    Input_V_c(1,i)  = curr;
+    curr = curr + direction*increment;
+    i = i + 1;
+end
+
+
+
+%Save to File
