@@ -3,6 +3,8 @@
 %fit each of our curves and propogate error in V_j using the relation 
 % I_j = m*V_j, where m = 1/R_effective, where R_effective is the
 % approximate linear resistance of our junction
+% Note that this is after we got rid of our initial Current_I_j error bars
+% after talking with Prof Lamoreaux
 
 
 %Setup File Name

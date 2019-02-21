@@ -47,7 +47,7 @@ for k =1:nptsv
     chisquare = chisquare + (I_j(k) - itot(k))^2/((dI_j(k))^2);
 end
 
-nptsv = nptsv*(1000/100);%N*(f_filter)/(f_sample) accounting for freq filter correlation
+%nptsv = nptsv*(1000/100);%N*(f_filter)/(f_sample) accounting for freq filter correlation
 numParameters = 2;
 chisquare = (1/(nptsv-numParameters))*chisquare;
 

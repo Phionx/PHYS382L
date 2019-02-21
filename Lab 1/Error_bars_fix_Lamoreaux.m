@@ -1,8 +1,5 @@
-%This matlab file is to combine the error bars of our junction current I_j
-%and our junction voltage V_j. To do this, we must approximately linearly
-%fit each of our curves and propogate error in V_j using the relation 
-% I_j = m*V_j, where m = 1/R_effective, where R_effective is the
-% approximate linear resistance of our junction
+%This matlab file is to get rid of our Current_I_j error bars because Prof
+%Lamoreaux said they were unnecessary
 
 
 %Setup File Name
