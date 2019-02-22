@@ -48,12 +48,10 @@ for k =1:nptsv
 end
 
 %nptsv = nptsv*(1000/100);%N*(f_filter)/(f_sample) accounting for freq filter correlation
-numParameters = 2;
+numParameters = 3;
 chisquare = (1/(nptsv-numParameters))*chisquare;
 
 %Convert Current in mA to A
 itot = itot*10^(-3);
-
-
 
 end

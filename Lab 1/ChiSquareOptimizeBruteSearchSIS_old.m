@@ -35,6 +35,7 @@ for k=0:end_points_num-1
     end_points(2,3 + k) = Current_I_j(255+255*k);
 end
     
+disp(R_0_fit);
 
 Fit = polyfit(end_points(1,:), end_points(2,:),1);
 R_0_fit = 1/Fit(1);

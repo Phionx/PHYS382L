@@ -10,7 +10,6 @@ trial                   =        '0'; %Just so we can cleanly store data, positi
 writing                 =          0; %if 1, then save csv and images, anything else = no save
 
 %File Names
-%file_read               = strcat('Data/measurementsAnalysis/SortedWrongAnalysis/', date_taken, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial), '.csv');
 file_read               = strcat('Data/measurementsAnalysis/FinalDataSISOffset/', date_taken, '_', junction_type, '_', tunneling_type, '_', 'Trial', string(trial), '.csv');
 file_write_image        = strcat('Figures/FitFigures/', date_written, '_', junction_type, '_', tunneling_type);
 file_write_image_inset  = strcat('Figures/FitFigures/', date_written, '_', junction_type, '_', tunneling_type, '_Inset');
@@ -42,11 +41,11 @@ Linear_Fit = polyfit(end_points(1,:), end_points(2,:), 1);
 R_0_fit = 1/Linear_Fit(1);  
 
 
- 
+
 %Parameter Ranges
-%           [Delta_al (meV), T (K),  R_0 (Ohms), Delta_pb (meV)] 
-L         = [           .0487-.01,   1.560-.1,  77.2226-.5, 1.3664-.01];%LOWER BOUND
-U         = [           .0487+.01,   1.560+.1,  77.2226+.5, 1.3664+.01];%UPPER BOUND
+%           [Delta_al (meV), T (K),  R_0 (Ohms), Delta_pb (meV), Offset] 
+L         = [           .02,   1.2,  R_0_fit-5,             1.3,  ];%LOWER BOUND
+U         = [           .09,   1.4,  R_0_fit+5, 1.5];%UPPER BOUND
 %increment = [            .002,   .05,         .2];%INCREMENT SIZE
 %NUMBER OF PARAMETER POINTS ON EACH AXIS [Delta_al, T, R_0]
 % len       = zeros(1,3);
@@ -54,8 +53,8 @@ U         = [           .0487+.01,   1.560+.1,  77.2226+.5, 1.3664+.01];%UPPER B
 %     len(k) = round(round((U(k)-L(k))/increment(k))+1);
 % end
 
-len       = [             3,     3,          3, 3];
-%len        = [             11,     11,          11, 11];
+%len       = [             21,     21,          21, 21];
+len        = [             11,     5,         5, 11];
 
 %Actual Parameter Space 
 parameter_grid_delta_al = linspace(L(1,1), U(1,1),len(1)); 

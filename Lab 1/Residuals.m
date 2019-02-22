@@ -2,9 +2,9 @@ clear all;
 close all;
 %Setup File Name
 clear;
-date_taken              = '20190220'; %Date
-date_written            = '20190220'; %Date Fitted
-tunneling_type          =      'SIN'; %1: SIN, 2: NIN, 3: SIS
+date_taken              = '20190221'; %Date
+date_written            = '20190221'; %Date Fitted
+tunneling_type          =      'SIS'; %1: SIN, 2: NIN, 3: SIS
 junction_type           =        '2'; %1,2, or 3
 trial                   =        '0'; %Just so we can cleanly store data, positive trials are forward sweeps, negative trials are backwards sweeps
 

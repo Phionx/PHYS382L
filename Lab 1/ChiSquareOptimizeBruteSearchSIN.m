@@ -45,7 +45,7 @@ R_0_fit = 1/Linear_Fit(1);
 %Parameter Ranges
 %           [Delta_pb (meV), T (K), R_0 (Ohms)] 
 L         = [            .9,   3.8,  R_0_fit-10];%LOWER BOUND
-U         = [           1.3,   4.6,  R_0_fit+10];%UPPER BOUND
+U         = [           4.0,   4.6,  R_0_fit+10];%UPPER BOUND
 increment = [           .02,   .05,         .2];%INCREMENT SIZE
 %NUMBER OF PARAMETER POINTS ON EACH AXIS [Delta_pb, T, R_0]
 len       = zeros(1,3);
@@ -53,8 +53,8 @@ for k=1:3
     len(k) = round(round((U(k)-L(k))/increment(k))+1);
 end
 
-len       = [             21,     21,          21];
-%len       = [             3,     3,          3];
+%len       = [             21,     21,          21];
+len       = [             5,     5,          5];
 
 %Actual Parameter Space 
 parameter_grid_delta = linspace(L(1,1), U(1,1),len(1)); 
@@ -270,7 +270,7 @@ function [chisquare_val] = chisquare(x)
     global Current_I_j;
     global Total_Error_Current_I_j;
     delta    = x(1,1);%meV
-    T        = x(1,2);%meV
+    T        = x(1,2);%K
     R_0      = x(1,3);%Ohms
     Voltages = Input_V_j;
     Currents = Current_I_j;
