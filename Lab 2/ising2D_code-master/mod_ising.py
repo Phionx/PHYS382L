@@ -29,6 +29,7 @@
 import sys
 import time
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 from sys import exit, argv
 from library_interface import IsingLattice
@@ -58,7 +59,7 @@ def set_input(cmd_line_args, parse_cmd_line_args):
     inp['T_min']      = 1.2    # minimum temperature
     inp['T_max']      = 3.0    # maximum temperature
     inp['T_spacing']  = 0.2    # step size from min to max temperature
-    inp['N']          = 100     # sqrt(lattice size) (i.e. lattice = N^2 points
+    inp['N']          = 15     # sqrt(lattice size) (i.e. lattice = N^2 points
 
     inp['T0_anneal']    = 4.0    # start temperature (arbitrary; feel free to change)
     inp['steps_anneal']    = 10000  # number of lattice steps in simulation
@@ -73,7 +74,7 @@ def set_input(cmd_line_args, parse_cmd_line_args):
     inp['B']                 = 0.0    # magnetic field strength
     inp['r_flip']            = 0.1    # ratio of sites examined to flip in each step
     inp['dir_out']           = 'data' # output directory for file output
-    inp['plots']             = False  # whether or not plots are generated
+    inp['plots']             = True  # whether or not plots are generated
                                  
     inp['print_inp']         = False  # optional flag
     inp['use_cpp']           = True   # use 1 for True and 0 for False
@@ -85,7 +86,13 @@ def set_input(cmd_line_args, parse_cmd_line_args):
     inp['curses']            = True # use the terminal cursor output
     inp['draw_lattice']     = False # is using ncurses, print the lattice at the
                                      # end of each time step
-
+#-------------- new code ----------
+    inp['num_bins']         = 10 #number of bins to make
+    inp['k_b']              = 1  #we choose units such that boltzmanns const. is 1
+#------------ end new code ---------
+                                    
+    
+    
     #function call from support_methods
     parse_cmd_line_args(inp, cmd_line_args)
 
@@ -195,6 +202,18 @@ def run_ising_lattice(inp, T_final, updates=True):
         E_collect = []
         M_collect = []
         SC_collect = []
+
+#---------- new code ----------------------- 
+        #initialize bins
+        E_current_bin = []
+        E_std_devs = []
+        M_current_bin = []
+        M_std_devs = []
+        step_num = 0
+        k = math.floor(inp['EM_samples']/inp['num_bins']) #number of analysis steps per bin
+        k_b = inp['k_b'] #pull botzmann's constant from input
+#------- end new code ------------------------
+        
         
         for T, B, sample_EM, sample_SC, prog_update in zip(
             gen_T(inp, T_final),
@@ -205,9 +224,30 @@ def run_ising_lattice(inp, T_final, updates=True):
         ):
             lattice.step(T,B)
 
+#----------- new code -----------
+            #Analyze and reset current bin when k steps have been taken in that bin
+            if step_num == k: 
+                E_std_devs.append(np.std(E_current_bin))
+                M_std_devs.append(np.std(M_current_bin))
+                E_current_bin = []
+                M_current_bin = []
+                step_num = 0
+#---------- end new code ---------
+            
             if sample_EM:
-                E_collect.append(lattice.get_E())
-                M_collect.append(lattice.get_M())
+#----------- new code -----------
+                step_num += 1 #update cur step number only when in analysis steps
+#--------- end new code ---------
+                E_val = lattice.get_E()
+                M_val = lattice.get_M()
+                E_collect.append(E_val)
+                M_collect.append(M_val)
+#---------- new code ----------------------- 
+                #binning technique follows
+                E_current_bin.append(E_val)
+                M_current_bin.append(M_val)
+#-------- end new code ----------------------- 
+                
             if sample_SC:
                 SC_collect.append( get_SC() )
             if updates and prog_update:
@@ -222,10 +262,21 @@ def run_ising_lattice(inp, T_final, updates=True):
         lattice.free_memory()
         SC_data = np.array(SC_collect)
 
+#---------- new code -----------------------
+        #calculate specific heat and susceptibility and std devs
+        spec_heat = (1/(k_b*(T_final**2)))*(np.mean(E_std_devs)**2)
+        std_spec_heat = (((1/(k_b*(T_final**2)))*2*np.mean(E_std_devs))**2 * (np.std(E_std_devs)**2))**(.5)
+        chi = (1/(k_b * T_final))*(np.mean(M_std_devs)**2)
+        std_chi = (((1/(k_b*T_final))*2*np.mean(M_std_devs))**2 * np.std(M_std_devs)**2)**(.5)
+#-------- end new code ----------------------
+
+#------------ edited code --------------------
+        #updated return to include spec heat, susceptibility, and std devs of each
         return (
-            (T_final, len(E_collect), np.mean(E_collect), np.std(E_collect), np.mean(M_collect), np.std (M_collect)),
+            (T_final, len(E_collect), np.mean(E_collect), np.std(E_collect), np.mean(M_collect), np.std (M_collect), spec_heat, std_spec_heat, chi, std_chi),
             (T_final, np.shape(SC_data)[0], np.array(SC_data.mean(0)), np.array(SC_data.std (0)))
         )
+#----------- end edited code -------------------
 
     except KeyboardInterrupt:
         try:

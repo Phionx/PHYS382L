@@ -298,11 +298,6 @@ class printer:
 
 def plot_graphs(data): #T, n_sample, E_mean,E_std,M_mean,M_std): #plot graphs at end
     dat = np.array(data)
-    print("0: " + str(dat[0,0]) + "\n")
-    print("1: " + str(dat[0,1]) + "\n")
-    print("2: " + str(dat[0,2]) + "\n")
-    print("3: " + str(dat[0,3]) + "\n")
-    print("4: " + str(dat[0,4]) + "\n")
     plt.figure(1)
     # plt.ylim(0,1)
     plt.errorbar(dat[:,0], dat[:,2], yerr=dat[:,3], fmt='o')
@@ -311,7 +306,15 @@ def plot_graphs(data): #T, n_sample, E_mean,E_std,M_mean,M_std): #plot graphs at
     plt.figure(2)
     plt.errorbar(dat[:,0], np.absolute(dat[:,4]), yerr=dat[:,5], uplims=True, lolims=True,fmt='o')
     plt.xlabel('Temperature')
-    plt.ylabel('Aveage Site Magnetization')
+    plt.ylabel('Average Site Magnetization')
+    plt.figure(3)
+    plt.errorbar(dat[:,0], np.absolute(dat[:,6]), yerr=dat[:,7], uplims=True, lolims=True,fmt='o')
+    plt.xlabel('Temperature')
+    plt.ylabel('Average Site Specific Heat')
+    plt.figure(4)
+    plt.errorbar(dat[:,0], np.absolute(dat[:,8]), yerr=dat[:,9], uplims=True, lolims=True,fmt='o')
+    plt.xlabel('Temperature')
+    plt.ylabel('Average Site Susceptibility')
     plt.show()
 
 def print_results(inp, EM_data, SC_data):
