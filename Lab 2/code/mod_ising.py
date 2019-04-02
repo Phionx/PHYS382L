@@ -31,6 +31,10 @@ import time
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+#------------ new code ---------
+import random
+#-----------end new code -------
+
 from sys import exit, argv
 from library_interface import IsingLattice
 from fn_ising import *
@@ -58,8 +62,8 @@ def set_input(cmd_line_args, parse_cmd_line_args):
 
     inp['T_min']      = 1.2    # minimum temperature
     inp['T_max']      = 3.0    # maximum temperature
-    inp['T_spacing']  = 0.2    # step size from min to max temperature
-    inp['N']          = 15     # sqrt(lattice size) (i.e. lattice = N^2 points
+    inp['T_spacing']  = 0.2   # step size from min to max temperature
+    inp['N']          = 10     # sqrt(lattice size) (i.e. lattice = N^2 points
 
     inp['T0_anneal']    = 4.0    # start temperature (arbitrary; feel free to change)
     inp['steps_anneal']    = 10000  # number of lattice steps in simulation
@@ -81,7 +85,7 @@ def set_input(cmd_line_args, parse_cmd_line_args):
 
     inp['date_output']       = False
     inp['file_prefix']       = ''
-    inp['multiprocess']      = False
+    inp['multiprocess']      = True
     # inp['skip_prog_print']   = False
     inp['curses']            = True # use the terminal cursor output
     inp['draw_lattice']     = False # is using ncurses, print the lattice at the
@@ -90,7 +94,13 @@ def set_input(cmd_line_args, parse_cmd_line_args):
     inp['num_bins']         = 10 #number of bins to make
     inp['k_b']              = 1  #we choose units such that boltzmanns const. is 1
 #------------ end new code ---------
-                                    
+
+#-------------- new code ----------
+    inp['T_localize']           = True
+    inp['T_c_guess']            = 2.5 #must be at least .2 away from both T_min and T_max
+    inp['T_localize_spacing']   = inp['T_spacing']/5
+    inp['T_localize_range']     = .2 #half of the range for the local area around T_c_guess
+#------------ end new code ---------         
     
     
     #function call from support_methods
@@ -205,11 +215,8 @@ def run_ising_lattice(inp, T_final, updates=True):
 
 #---------- new code ----------------------- 
         #initialize bins
-        E_current_bin = []
         E_std_devs = []
-        M_current_bin = []
         M_std_devs = []
-        step_num = 0
         k = math.floor(inp['EM_samples']/inp['num_bins']) #number of analysis steps per bin
         k_b = inp['k_b'] #pull botzmann's constant from input
 #------- end new code ------------------------
@@ -223,30 +230,12 @@ def run_ising_lattice(inp, T_final, updates=True):
             gen_prog_update(inp)
         ):
             lattice.step(T,B)
-
-#----------- new code -----------
-            #Analyze and reset current bin when k steps have been taken in that bin
-            if step_num == k: 
-                E_std_devs.append(np.std(E_current_bin))
-                M_std_devs.append(np.std(M_current_bin))
-                E_current_bin = []
-                M_current_bin = []
-                step_num = 0
-#---------- end new code ---------
             
             if sample_EM:
-#----------- new code -----------
-                step_num += 1 #update cur step number only when in analysis steps
-#--------- end new code ---------
                 E_val = lattice.get_E()
                 M_val = lattice.get_M()
                 E_collect.append(E_val)
                 M_collect.append(M_val)
-#---------- new code ----------------------- 
-                #binning technique follows
-                E_current_bin.append(E_val)
-                M_current_bin.append(M_val)
-#-------- end new code ----------------------- 
                 
             if sample_SC:
                 SC_collect.append( get_SC() )
@@ -262,6 +251,20 @@ def run_ising_lattice(inp, T_final, updates=True):
         lattice.free_memory()
         SC_data = np.array(SC_collect)
 
+        shuffled_E = E_collect
+        shuffled_M = M_collect
+        random.shuffle(shuffled_E)
+        random.shuffle(shuffled_M)
+
+#---------- new code -----------------------
+        while len(shuffled_E) > k:
+            E_std_devs.append(np.std(shuffled_E[:k]))
+            shuffled_E = shuffled_E[k:]
+            M_std_devs.append(np.std(shuffled_M[:k]))
+            shuffled_M = shuffled_M[k:]
+#-------- end new code ----------------------
+            
+                
 #---------- new code -----------------------
         #calculate specific heat and susceptibility and std devs
         spec_heat = (1/(k_b*(T_final**2)))*(np.mean(E_std_devs)**2)
@@ -289,6 +292,21 @@ def run_ising_lattice(inp, T_final, updates=True):
 def make_T_array(inp):
     if inp['T_max'] <= inp['T_min']:
         return [inp['T_min'],]
+#------------ edited code --------------------
+    #make the T spacing more dense near a guess of T_c
+    if inp['T_localize']:
+        if inp['T_c_guess'] + inp['T_localize_range'] > inp['T_max']:
+            inp['T_localize_range'] = inp['T_max'] - inp['T_c_guess']
+            
+        T_array = np.concatenate((np.arange(inp['T_min'], inp['T_c_guess']-inp['T_localize_range']-1E-5, inp['T_spacing']),
+                              np.arange(inp['T_c_guess']-inp['T_localize_range'], inp['T_c_guess']+inp['T_localize_range']-1E-5, inp['T_localize_spacing']),
+                              np.arange(inp['T_c_guess']+inp['T_localize_range'], inp['T_max']+1E-5, inp['T_spacing'])))
+        
+        if not inp['T_max'] in T_array:
+            T_array = np.concatenate((T_array, [inp['T_max']]))
+            
+        return T_array
+#-----------end edited code ------------------
     else:
         # Add a slight offset to the upper bound so T_max won't be excluded
         # when T_max-T_min is evenly divisible by T_spacing. 
