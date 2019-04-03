@@ -9,7 +9,7 @@ import csv
 #DATA PARSING
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #T,E,M,C,X  - Temperature, Energy, Magnetism, Specific Heat, Susceptibility
-EMfile = 'Data/APR:1:2019/4_01_N100_1.20T3.00_EM_v0.csv'
+EMfile = 'Data/APR:3:2019/CLEANED_3_30_N100_1.20T3.00_EM_v0.csv'
 with open(EMfile, 'r') as csvEMFile:
 	readerEM = csv.reader(csvEMFile)
 	readerEM   = list(readerEM)
@@ -32,7 +32,7 @@ X_mean = np.array([row[8] for row in readerEM]).astype(np.float)
 X_std  = np.array([row[9] for row in readerEM]).astype(np.float)
 
 #Spin Correlations
-SCfile = 'Data/APR:1:2019/4_01_N100_1.20T3.00_SC_v0.csv'
+SCfile = 'Data/APR:3:2019/CLEANED_3_30_N100_1.20T3.00_SC_v0.csv'
 with open(SCfile, 'r') as csvSCFile:
 	readerSC = csv.reader(csvSCFile)
 	readerSC = list(readerSC)
@@ -196,7 +196,7 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 	ytheory = np.array(ytheory)
 	#Experiment
 	plt.figure(fig_num)
-	plt.plot(xdata, ydata, 'k.', color='#3F7F4C', label="Simulation Data")
+	plt.plot(xdata, ydata, 'ko', markersize=1, color='#3F7F4C', label="Simulation Data")
 	plt.fill_between(xdata, ydata-yerror, ydata+yerror, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
 
 	#Best Theory
@@ -213,13 +213,15 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 		theory_label += str(params[i]) + " pm "
 		theory_label += str(params_err[i]) 
 
-	print(xtheory)
-	print(ytheory)
 	plt.plot(xtheory, ytheory, 'k-', color='#CC4F1B', label=theory_label)
 	plt.legend(loc='upper right')
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
 	plt.title(title)
+
+	fig = plt.gcf()
+	fig.set_size_inches((14, 9.5), forward=False)
+	fig.savefig("figs/" + title+".png", dpi=500)
 
 def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -242,6 +244,9 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
 	plt.title(title)
+	fig = plt.gcf()
+	fig.set_size_inches((14, 9.5), forward=False)
+	fig.savefig("figs/" + title+".png", dpi=500)
 	return
 
 def find_nearest(array, value):
@@ -267,6 +272,7 @@ def find_nearest(array, value):
 
 #Energy Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
+print("Energy Full Fit: BEGIN\n")
 scale_constant            = 1.0
 add_constant              = 1.0
 parameter_estimates       = [scale_constant, add_constant]
@@ -300,7 +306,7 @@ yfit = function(xfit, *Optimal_params)
 title    = "Energy vs. Temperature"
 y_label  = "Energy (Units)"
 x_label  = "Temperature (K)"
-fit_eq   = "$E = AE_\\{original\\}(t) + B$"
+fit_eq   = "$E = A*\\hat{E}(t) + B$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
@@ -309,10 +315,13 @@ title    = "Energy vs. Temperature (Residuals)"
 y_label  = "Energy (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+
+print("Energy Full Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #Magnetization Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
+print("Magnetization Full Fit: BEGIN\n")
 Estimate_T_c_mag          = 2.269
 
 function                  =	mag_func
@@ -366,16 +375,18 @@ title    = "Magnetization vs. Temperature (Residuals)"
 y_label  = "Magnetization (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+print("Magnetization Full Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 
 #Magnetization: T_C, \beta
 #-----------------------------------------------------------------------------------------------------------------------------------------
+print("Magnetization Power Law Fit: BEGIN\n")
 Estimate_T_c_beta         = 2.269
 Estimate_beta             = 1.0/8
 Constant                  = 1.0
 parameter_estimates       = [Estimate_T_c_beta, Estimate_beta, Constant]
-var                       = [[-.1, 0, -100000],[.1, .2, 100000]]
+var                       = [[-.2, 0, -10000],[.2, .3, 10000]]
 
 parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = beta_func
@@ -387,7 +398,7 @@ fig_num                   += 1
 parameter_estimates[0]    = 2.3
 fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
 
-fit_fraction_left_outer   = 2.0/4
+fit_fraction_left_outer   = 1.0/3
 fit_fraction_left_inner   = 1.0/10
 fit_fraction_right_outer  = 0
 fit_fraction_right_inner  = 0
@@ -431,12 +442,14 @@ title    = "Magnetization vs. Temperature (Residuals)"
 y_label  = "Magnetization (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+print("Magnetization Power Law Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 #Susceptibility: T_C, \gamma
 #-----------------------------------------------------------------------------------------------------------------------------------------
+print("Susceptibility Power Law Fit: BEGIN\n")
 Estimate_T_c_gamma        = 2.269
 Estimate_gamma            = 7.0/4
 Constant                  = 1.0
@@ -458,7 +471,7 @@ fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
 fit_fraction_left_outer   = 0
 fit_fraction_left_inner   = 0
 fit_fraction_right_outer  = 1.0/3
-fit_fraction_right_inner  = 1.0/12
+fit_fraction_right_inner  = 1.0/10
 
 data_points               = len(xdata_data)
 xdata_fit_left            = xdata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
@@ -498,10 +511,12 @@ title    = "Susceptibility vs. Temperature (Residuals)"
 y_label  = "Susceptibility (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+print("Susceptibility Power Law Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #Specific Heat: T_c, \alpha
 #-----------------------------------------------------------------------------------------------------------------------------------------
+print("Specific Heat Power Law Fit: BEGIN\n")
 Estimate_T_c_alpha        = 2.269
 Estimate_alpha            = 0.0
 Constant                  = 1.0
@@ -520,7 +535,7 @@ fig_num                   += 1
 # parameter_estimates[0]    = 2.3
 fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
 
-fit_fraction_left_outer   = 1.0/6
+fit_fraction_left_outer   = 1.0/4
 fit_fraction_left_inner   = 1.0/10
 fit_fraction_right_outer  = 0.0/3
 fit_fraction_right_inner  = 0.0/10
@@ -565,6 +580,5 @@ title    = "Specific Heat vs. Temperature (Residuals)"
 y_label  = "Specific Heat (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
-
-plt.show()
+print("Specific Heat Power Law Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
