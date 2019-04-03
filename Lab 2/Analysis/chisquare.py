@@ -84,10 +84,29 @@ def K_one_calc(x, *parameters):
 	return integrate.quad(lambda phi: (1-(kappa**2.0)*((np.sin(phi))**2))**(-1.0/2.0), 0.0, np.pi/2.0)[0]
 
 def energy_func(x, *parameters):
-	T     = x
-	kappa = kappa_calc(T)
-	k_one = K_one_calc(kappa)
-	return -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+	scale = parameters[0]
+	add   = parameters[1]
+
+	#number
+	if (np.isscalar(x)):
+		T = x
+		kappa  = kappa_calc(T)
+		k_one  = K_one_calc(kappa)
+		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+		return answer
+
+	#Array
+	T_set = x
+	ans   = [0 for T in T_set]
+	data_points = len(ans)
+	for i in range(data_points):
+		T = T_set[i]
+		kappa  = kappa_calc(T)
+		k_one  = K_one_calc(kappa)
+		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+		ans[i] = answer
+	ans = np.array(ans)
+	return scale*ans + add
 
 #-------------------------------------------------------------------------
 
@@ -105,8 +124,9 @@ def alpha_func(x, *parameters):
 	T     = x
 	T_c   = parameters[0]
 	alpha = parameters[1]
+	constant = parameters[2]
 
-	y = np.abs((T - T_c)/T_c)**(-1.0*alpha)
+	y = constant*np.abs((T - T_c)/T_c)**(-1.0*alpha)
 	return y
 
 #-------------------------------------------------------------------------
@@ -117,8 +137,9 @@ def beta_func(x, *parameters):
 	T     = x
 	T_c   = parameters[0]
 	beta = parameters[1]
+	constant = parameters[2]
 
-	y = np.abs((T - T_c)/T_c)**(1.0*beta)
+	y = constant*np.abs((T - T_c)/T_c)**(1.0*beta)
 	return y
 
 #-------------------------------------------------------------------------
@@ -129,8 +150,9 @@ def gamma_func(x, *parameters):
 	T     = x
 	T_c   = parameters[0]
 	gamma = parameters[1]
+	constant = parameters[2]
 
-	y = np.abs((T - T_c)/T_c)**(-1.0*gamma)
+	y = constant*np.abs((T - T_c)/T_c)**(-1.0*gamma)
 	return y
 
 #-------------------------------------------------------------------------
@@ -141,8 +163,9 @@ def nu_func(x, *parameters):
 	T     = x
 	T_c   = parameters[0]
 	nu    = parameters[1]
+	constant = parameters[2]
 
-	y = np.abs((T - T_c)/T_c)**(-1.0*nu)
+	y = constant*np.abs((T - T_c)/T_c)**(-1.0*nu)
 	return y
 
 #-------------------------------------------------------------------------
@@ -152,8 +175,9 @@ def nu_func(x, *parameters):
 def eta_func(x, *parameters):
 	T_c   = parameters[0]
 	eta   = parameters[1]
+	constant = parameters[2]
 
-	y = np.abs(x)**(-1.0*eta)
+	y = constant*np.abs(x)**(-1.0*eta)
 	return y
 
 #-------------------------------------------------------------------------
@@ -230,58 +254,66 @@ def find_nearest(array, value):
 #Fitting
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #Estimates
-Estimate_T_c_alpha   = 2.2
-Estimate_alpha       = 0.0
 
 
 
-Estimate_T_c_gamma   = 2.28
-Estimate_gamma       = 7.0/4
 
-Estimate_T_c_nu      = 2.2
-Estimate_nu          = 1.0
+# Estimate_T_c_nu      = 2.2
+# Estimate_nu          = 1.0
 
-Estimate_eta         = 1.0/4
+# Estimate_eta         = 1.0/4
 
 
 
 #Energy Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
+scale_constant            = 1.0
+add_constant              = 1.0
+parameter_estimates       = [scale_constant, add_constant]
+
+var                       = [[-100, -100],[100, 100]]
+parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 xdata_data                = T_EM
 ydata_data                = E_mean
 yerror_data               = E_std
 function                  = energy_func
 fig_num                   = 1
 
-Optimal_params        = []
-Optimal_params_err    = []
-Optimal_params_names  = []
+xdata_fit                 = xdata_data
+ydata_fit                 = ydata_data
+yerror_fit                = yerror_data
 
 
-chi_square_min  = chi_square(energy_func, xdata_data, ydata_data, yerror_data)
+popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+Optimal_params        = [x for x in popt]
+Optimal_params_err    = [x for x in perr]
+Optimal_params_names  = ["Scale Constant A", "Add Constant B"]
+
+chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
 Optimal_params_names.append("Min Chi Square")
+
+
+xfit = xdata_fit
+yfit = function(xfit, *Optimal_params)
 
 title    = "Energy vs. Temperature"
 y_label  = "Energy (Units)"
 x_label  = "Temperature (K)"
-fit_eq   = ""
-
-xfit = xdata_data
-yfit = [function(x) for x in xfit]
+fit_eq   = "$E = AE_\\{original\\}(t) + B$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
+fig_num += 1
 title    = "Energy vs. Temperature (Residuals)"
 y_label  = "Energy (Units)"
 x_label  = "Temperature (K)"
-fig_num  += 1
-plot_residuals(xdata_data, ydata_data, yerror_data, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #Magnetization Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
-Estimate_T_c_mag          = 2.27
+Estimate_T_c_mag          = 2.269
 
 function                  =	mag_func
 xdata_data                = T_EM
@@ -290,7 +322,7 @@ yerror_data               = M_std
 fig_num                   += 1
 
 fit_fraction_left_outer   = 1.0
-fit_fraction_left_inner   = 1.0/50
+fit_fraction_left_inner   = 1.0/30
 
 fit_fraction_right_outer  = 1.0
 fit_fraction_right_inner  = 1.0/58
@@ -298,14 +330,14 @@ fit_fraction_right_inner  = 1.0/58
 fit_center_index          = find_nearest(xdata_data, Estimate_T_c_mag)
 data_points               = len(xdata_data)
 xdata_fit_left            = xdata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 xdata_fit                 = np.concatenate((xdata_fit_left, xdata_fit_right), axis=None)
 ydata_fit_left            = ydata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 ydata_fit                 = np.concatenate((ydata_fit_left, ydata_fit_right), axis=None)
 
 yerror_fit_left            = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-yerror_fit_right           = yerror_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+yerror_fit_right           = yerror_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 yerror_fit                 = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
 
 
@@ -339,60 +371,58 @@ plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=titl
 
 #Magnetization: T_C, \beta
 #-----------------------------------------------------------------------------------------------------------------------------------------
-Estimate_T_c_beta    = 2.3
-Estimate_beta        = 1.0/8
-var                       = [1,1]
+Estimate_T_c_beta         = 2.269
+Estimate_beta             = 1.0/8
+Constant                  = 1.0
+parameter_estimates       = [Estimate_T_c_beta, Estimate_beta, Constant]
+var                       = [[-.1, 0, -1000],[.1, .2, 10000]]
 
-parameter_bound_ranges    = ([Estimate_T_c_beta -var[0], Estimate_beta-var[1]], [Estimate_T_c_beta +var[0], Estimate_beta+var[1]])
-parameter_estimate_ranges = [Estimate_T_c_beta, Estimate_beta]
+parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = beta_func
 xdata_data                = T_EM
 ydata_data                = M_mean
 yerror_data               = M_std
 fig_num                   += 1
 
-fit_fraction_left_outer   = 3.0/4
-fit_fraction_left_inner   = 0
+parameter_estimates[0]    = 2.3
+fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
 
+fit_fraction_left_outer   = 2.0/4
+fit_fraction_left_inner   = 1.0/10
 fit_fraction_right_outer  = 0
 fit_fraction_right_inner  = 0
 
-fit_center_index          = find_nearest(xdata_data, Estimate_T_c_beta)
+
 data_points               = len(xdata_data)
 xdata_fit_left            = xdata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 xdata_fit                 = np.concatenate((xdata_fit_left, xdata_fit_right), axis=None)
 ydata_fit_left            = ydata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 ydata_fit                 = np.concatenate((ydata_fit_left, ydata_fit_right), axis=None)
 
-yerror_fit_left            = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-yerror_fit_right           = yerror_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
-yerror_fit                 = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
+yerror_fit_left           = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
+yerror_fit_right          = yerror_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
+yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
 
 
-popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimate_ranges, parameter_bound_ranges)
-Optimal_T_c_beta      = popt[0]
-Optimal_beta          = popt[1]
-Optimal_T_c_beta_err  = perr[0]
-Optimal_beta_err      = perr[1]
+popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+Optimal_params        = [x for x in popt]
+Optimal_params_err    = [x for x in perr]
+Optimal_params_names  = ["$T_c$", "$\\beta$", "Constant C"]
 
-Optimal_params        = [Optimal_T_c_beta, Optimal_beta]
-Optimal_params_err    = [Optimal_T_c_beta_err, Optimal_beta_err]
-Optimal_params_names  = ["$T_c$", "$\\beta$"]
-
-chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, Optimal_T_c_beta, Optimal_beta)
+chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
 Optimal_params_names.append("Min Chi Square")
 
 
 xfit = xdata_fit
-yfit = function(xfit, Optimal_T_c_beta, Optimal_beta)
+yfit = function(xfit, *Optimal_params)
 
 title    = "Magnetization vs. Temperature"
 y_label  = "Magnetization (Units)"
 x_label  = "Temperature (K)"
-fit_eq   = "$|M| \\propto |t|^{\\beta}$"
+fit_eq   = "$|M| = C|t|^{\\beta}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
@@ -407,57 +437,60 @@ plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=titl
 
 #Susceptibility: T_C, \gamma
 #-----------------------------------------------------------------------------------------------------------------------------------------
-var                       = [10,10]
-parameter_bound_ranges    = ([Estimate_T_c_gamma -var[0], Estimate_gamma-var[1]], [Estimate_T_c_gamma + var[0], Estimate_gamma + var[1]])
-parameter_estimate_ranges = [Estimate_T_c_gamma, Estimate_gamma]
+Estimate_T_c_gamma        = 2.269
+Estimate_gamma            = 7.0/4
+Constant                  = 1.0
+parameter_estimates       = [Estimate_T_c_gamma, Estimate_gamma, Constant]
+var                       = [[-.01, 0, -1000],[.1, .01, 10000]]
+
+parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = gamma_func
 xdata_data                = T_EM
 ydata_data                = X_mean
 yerror_data               = X_std
 fig_num                   += 1
 
+
+
+# parameter_estimates[0]    = 2.3
+fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
+
 fit_fraction_left_outer   = 0
 fit_fraction_left_inner   = 0
+fit_fraction_right_outer  = 1.0/3
+fit_fraction_right_inner  = 1.0/12
 
-fit_fraction_right_outer  = 1.0/4
-fit_fraction_right_inner  = 1.0/16
-
-fit_center_index          = find_nearest(xdata_data, Estimate_T_c_beta)
 data_points               = len(xdata_data)
 xdata_fit_left            = xdata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 xdata_fit                 = np.concatenate((xdata_fit_left, xdata_fit_right), axis=None)
 ydata_fit_left            = ydata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 ydata_fit                 = np.concatenate((ydata_fit_left, ydata_fit_right), axis=None)
 
-yerror_fit_left            = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-yerror_fit_right           = yerror_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
-yerror_fit                 = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
-
-popt, perr             = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimate_ranges, parameter_bound_ranges)
-Optimal_T_c_gamma      = popt[0]
-Optimal_gamma          = popt[1]
-Optimal_T_c_gamma_err  = perr[0]
-Optimal_gamma_err      = perr[1]
-
-Optimal_params        = [Optimal_T_c_gamma, Optimal_gamma]
-Optimal_params_err    = [Optimal_T_c_gamma_err, Optimal_gamma_err]
-Optimal_params_names  = ["$T_c$", "$\\gamma$"]
+yerror_fit_left           = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
+yerror_fit_right          = yerror_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
+yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
 
 
-chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, Optimal_T_c_gamma, Optimal_gamma)
+popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+Optimal_params        = [x for x in popt]
+Optimal_params_err    = [x for x in perr]
+Optimal_params_names  = ["$T_c$", "$\\gamma$", "Constant C"]
+
+chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
 Optimal_params_names.append("Min Chi Square")
 
 
 xfit = xdata_fit
-yfit = function(xfit, Optimal_T_c_gamma, Optimal_gamma)
+yfit = function(xfit, *Optimal_params)
 
 title    = "Susceptibility vs. Temperature"
 y_label  = "Susceptibility (Units)"
 x_label  = "Temperature (K)"
-fit_eq   = "$\\chi \\propto |t|^{-\\gamma}$"
+fit_eq   = "$\\chi = C|t|^{-\\gamma}$"
+
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
 fig_num += 1
@@ -465,63 +498,66 @@ title    = "Susceptibility vs. Temperature (Residuals)"
 y_label  = "Susceptibility (Units)"
 x_label  = "Temperature (K)"
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
-
-plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #Specific Heat: T_c, \alpha
 #-----------------------------------------------------------------------------------------------------------------------------------------
-var                       = [1,1]
-parameter_bound_ranges    = ([Estimate_T_c_alpha -var[0], Estimate_alpha-var[1]], [Estimate_T_c_alpha + var[0], Estimate_alpha + var[1]])
-parameter_estimate_ranges = [Estimate_T_c_alpha, Estimate_alpha]
+Estimate_T_c_alpha        = 2.269
+Estimate_alpha            = 7.0/4
+Constant                  = 1.0
+parameter_estimates       = [Estimate_T_c_alpha, Estimate_alpha, Constant]
+var                       = [[-.01, 0, -1000],[.01,.01, 10000]]
+
+parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = alpha_func
 xdata_data                = T_EM
 ydata_data                = C_mean
 yerror_data               = C_std
 fig_num                   += 1
 
-fit_fraction_left_outer   = 1.0/3
-fit_fraction_left_inner   = 1.0/4
 
-fit_fraction_right_outer  = 0
-fit_fraction_right_inner  = 0
 
-fit_center_index          = find_nearest(xdata_data, Estimate_T_c_beta)
+# parameter_estimates[0]    = 2.3
+fit_center_index          = find_nearest(xdata_data, parameter_estimates[0])
+
+fit_fraction_left_outer   = 1.0/6
+fit_fraction_left_inner   = 1.0/10
+fit_fraction_right_outer  = 0.0/3
+fit_fraction_right_inner  = 0.0/10
+
+
+
 data_points               = len(xdata_data)
 xdata_fit_left            = xdata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+xdata_fit_right           = xdata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 xdata_fit                 = np.concatenate((xdata_fit_left, xdata_fit_right), axis=None)
 ydata_fit_left            = ydata_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
+ydata_fit_right           = ydata_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
 ydata_fit                 = np.concatenate((ydata_fit_left, ydata_fit_right), axis=None)
 
-yerror_fit_left            = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
-yerror_fit_right           = yerror_data[fit_center_index + int(fit_fraction_right_inner*fit_center_index):fit_center_index + int(fit_fraction_right_outer*fit_center_index)]
-yerror_fit                 = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
-
-popt, perr             = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimate_ranges, parameter_bound_ranges)
-Optimal_T_c_alpha      = popt[0]
-Optimal_alpha          = popt[1]
-Optimal_T_c_alpha_err  = perr[0]
-Optimal_alpha_err      = perr[1]
-
-Optimal_params        = [Optimal_T_c_alpha, Optimal_alpha]
-Optimal_params_err    = [Optimal_T_c_alpha_err, Optimal_alpha_err]
-Optimal_params_names  = ["$T_c$", "$\\alpha$"]
+yerror_fit_left           = yerror_data[fit_center_index - int(fit_fraction_left_outer*fit_center_index):fit_center_index - int(fit_fraction_left_inner*fit_center_index)]
+yerror_fit_right          = yerror_data[fit_center_index + int(fit_fraction_right_inner*(data_points-fit_center_index-1)):fit_center_index + int(fit_fraction_right_outer*(data_points-fit_center_index))]
+yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), axis=None)
 
 
-chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, Optimal_T_c_alpha, Optimal_alpha)
+popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+Optimal_params        = [x for x in popt]
+Optimal_params_err    = [x for x in perr]
+Optimal_params_names  = ["$T_c$", "$\\alpha$", "Constant C"]
+
+chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
 Optimal_params_names.append("Min Chi Square")
 
 
 xfit = xdata_fit
-yfit = function(xfit, Optimal_T_c_alpha, Optimal_alpha)
+yfit = function(xfit, *Optimal_params)
 
 title    = "Specific Heat vs. Temperature"
 y_label  = "Specific Heat (Units)"
 x_label  = "Temperature (K)"
-fit_eq   = "$\\chi \\propto |t|^{-\\alpha}$"
+fit_eq   = "$\\chi = C|t|^{-\\alpha}$"
+
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
 fig_num += 1
@@ -532,48 +568,3 @@ plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=titl
 
 plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
-
-#Specific Heat: T_c, \alpha
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# var                       = 2
-
-# parameter_bound_ranges    = ([Estimate_T_c_alpha -var, Estimate_alpha-var], [Estimate_T_c_alpha +var, Estimate_alpha+var])
-# parameter_estimate_ranges = [Estimate_T_c_alpha, Estimate_alpha]
-# function                  = alpha_func
-# xdata_data                = T_EM
-# ydata_data                = C_mean
-# yerror_data               = C_std
-
-# fit_fraction              = 1.0/8
-
-# fit_center_index          = find_nearest(xdata_data, Estimate_T_c_alpha)
-# data_points               = len(xdata_data)
-# xdata_fit                 =  xdata_data[fit_center_index - int((fit_fraction)*data_points):fit_center_index + int((fit_fraction)*data_points)]
-# ydata_fit                 =  ydata_data[fit_center_index - int((fit_fraction)*data_points):fit_center_index + int((fit_fraction)*data_points)]
-# yerror_fit                = yerror_data[fit_center_index - int((fit_fraction)*data_points):fit_center_index + int((fit_fraction)*data_points)]
-
-# popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimate_ranges, parameter_bound_ranges)
-# Optimal_T_c_alpha     = popt[0]
-# Optimal_alpha         = popt[1]
-# Optimal_T_c_alpha_err = perr[0]
-# Optimal_alpha_err     = perr[1]
-
-# Optimal_params        = [Optimal_T_c_alpha, Optimal_alpha]
-# Optimal_params_err    = [Optimal_T_c_alpha_err, Optimal_alpha_err]
-# Optimal_params_names  = ["T_c", "alpha"]
-
-# xtheory_calc = xdata_fit
-# ytheory_calc = alpha_func(xtheory_calc, Optimal_T_c_alpha, Optimal_alpha)
-# plot_fit(xdata_data, ydata_data, yerror_data, xtheory_calc, ytheory_calc, Optimal_params, Optimal_params_err, Optimal_params_names)
-
-
-
-
-
-
-
-
-
-
-
