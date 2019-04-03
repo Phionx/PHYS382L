@@ -271,7 +271,7 @@ scale_constant            = 1.0
 add_constant              = 1.0
 parameter_estimates       = [scale_constant, add_constant]
 
-var                       = [[-100, -100],[100, 100]]
+var                       = [[-10000, -10000],[10000, 10000]]
 parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 xdata_data                = T_EM
 ydata_data                = E_mean
@@ -375,7 +375,7 @@ Estimate_T_c_beta         = 2.269
 Estimate_beta             = 1.0/8
 Constant                  = 1.0
 parameter_estimates       = [Estimate_T_c_beta, Estimate_beta, Constant]
-var                       = [[-.1, 0, -1000],[.1, .2, 10000]]
+var                       = [[-.1, 0, -100000],[.1, .2, 100000]]
 
 parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = beta_func
@@ -441,7 +441,7 @@ Estimate_T_c_gamma        = 2.269
 Estimate_gamma            = 7.0/4
 Constant                  = 1.0
 parameter_estimates       = [Estimate_T_c_gamma, Estimate_gamma, Constant]
-var                       = [[-.01, 0, -1000],[.1, .01, 10000]]
+var                       = [[-.5, -.5, -100000],[.5, .5, 100000]]
 
 parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = gamma_func
@@ -503,10 +503,10 @@ plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=titl
 #Specific Heat: T_c, \alpha
 #-----------------------------------------------------------------------------------------------------------------------------------------
 Estimate_T_c_alpha        = 2.269
-Estimate_alpha            = 7.0/4
+Estimate_alpha            = 0.0
 Constant                  = 1.0
 parameter_estimates       = [Estimate_T_c_alpha, Estimate_alpha, Constant]
-var                       = [[-.01, 0, -1000],[.01,.01, 10000]]
+var                       = [[-.5, -.5, -100000],[.5,.5, 100000]]
 
 parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 function                  = alpha_func
