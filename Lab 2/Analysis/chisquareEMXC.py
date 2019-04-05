@@ -244,7 +244,7 @@ def eta_func(x, *parameters):
 	return y
 
 #-------------------------------------------------------------------------
-savefigs = True
+savefigs = False
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -257,6 +257,7 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 	yerror  = np.array(yerror)
 	xtheory = np.array(xtheory)
 	ytheory = np.array(ytheory)
+	
 	#Experiment
 	plt.figure(fig_num)
 	plt.plot(xdata, ydata, 'ko', markersize=1, color='#3F7F4C', label="Simulation Data")
@@ -285,6 +286,9 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 		fig.set_size_inches((14, 9.5), forward=False)
 		fig.savefig("figs/" + title+".png", dpi=500)
 
+	
+
+
 def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
 	y_label = graph_labels['y_label']
@@ -297,6 +301,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	ytheory = np.array(ytheory)
 	data_points = len(xdata)
 
+	#RESIDUALS
 	print("xdata len: " + str(len(xdata)) + " " + "ydata len: " + str(len(ydata)))
 	# print("residuals(data): " + str(ydata))
 	# print("residuals(theory): " + str(ytheory))
@@ -306,12 +311,36 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	plt.plot(xres, yres, 'k-', color='#3F7F4C')
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
-	plt.title(title)
+	plt.title(title + " (Residuals)")
 
 	if (savefigs):
 		fig = plt.gcf()
 		fig.set_size_inches((14, 9.5), forward=False)
-		fig.savefig("figs/" + title+".png", dpi=400)
+		fig.savefig("figs/" + title + " (Residuals).png", dpi=400)
+
+	#INSET
+	plt.figure(fig_num-1)
+	try:
+		if(graph_labels['log_scale_x'] and graph_labels['log_scale_y']):
+				plt.loglog(xdata, ydata, 'ko', markersize=1, color='#3F7F4C', label="Simulation Data")
+				# plt.fill_between(xdata, ydata-yerror, ydata+yerror, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
+				plt.loglog(xtheory, ytheory, 'k-', color='#CC4F1B')
+	except:
+		plt.plot(xdata, ydata, 'ko', markersize=1, color='#3F7F4C', label="Simulation Data")
+		plt.fill_between(xdata, ydata-yerror, ydata+yerror, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
+		plt.plot(xtheory, ytheory, 'k-', color='#CC4F1B')
+	
+	# plt.legend(loc='upper right')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.title(title + " (Inset)")
+	
+
+	if (savefigs):
+		fig = plt.gcf()
+		fig.set_size_inches((14, 9.5), forward=False)
+		fig.savefig("figs/" + title + " (Inset).png", dpi=500)
+
 	return
 
 def find_nearest(array, value):
@@ -369,17 +398,14 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "Energy vs. Temperature (Full Fit)"
+title    = "Analytic Fit of Energy vs. Temperature"
 y_label  = "Energy (J)"
 x_label  = "Temperature (J/$k_B$)"
 fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Energy vs. Temperature (Full Fit Residuals)"
-y_label  = "Energy (J)"
-x_label  = "Temperature (J/$k_B$)"
+fig_num += 2
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 
 print("Energy Full Fit: END\n")
@@ -430,17 +456,14 @@ xfit = xdata_fit
 yfit = [function(x) for x in xfit]
 
 
-title    = "Magnetization vs. Temperature (Full Fit)"
+title    = "Analytic Fit of Magnetization vs. Temperature"
 y_label  = "Magnetization (Units)"
 x_label  = "Temperature (J/$k_B$)"
 fit_eq   = "M(T)"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Magnetization vs. Temperature (Full Fit Residuals)"
-y_label  = "Magnetization (Units)"
-x_label  = "Temperature (J/$k_B$)"
+fig_num += 2
 plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 print("Magnetization Full Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -505,11 +528,8 @@ fit_eq   = "$|M| = C|t|^{\\beta}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Magnetization vs. Temperature (Residuals)"
-y_label  = "Magnetization (Units)"
-x_label  = "Temperature (J/$k_B$)"
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+fig_num += 2
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True)
 print("Magnetization Power Law Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -575,11 +595,8 @@ fit_eq   = "$\\chi = C|t|^{-\\gamma}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Susceptibility vs. Temperature (Residuals)"
-y_label  = "Susceptibility (Units)"
-x_label  = "Temperature (J/$k_B$)"
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+fig_num += 2
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True)
 print("Susceptibility Power Law Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -711,14 +728,8 @@ fit_eq   = "$\\chi = C|t|^{-\\alpha}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Specific Heat vs. Temperature (Residuals)"
-y_label  = "Specific Heat (Units)"
-x_label  = "Temperature (J/$k_B$)"
-print(xdata_fit)
-print(ydata_fit)
-
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+fig_num += 2
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True)
 print("Specific Heat Power Law Fit: END\n")
 plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------

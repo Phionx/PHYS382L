@@ -172,6 +172,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	ytheory = np.array(ytheory)
 	data_points = len(xdata)
 
+	#RESIDUALS
 	print("xdata len: " + str(len(xdata)) + " " + "ydata len: " + str(len(ydata)))
 	# print("residuals(data): " + str(ydata))
 	# print("residuals(theory): " + str(ytheory))
@@ -181,13 +182,46 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	plt.plot(xres, yres, 'k-', color='#3F7F4C')
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
-	plt.title(title)
+	plt.title(title + " (Residuals)")
 
 	if (savefigs):
 		fig = plt.gcf()
 		fig.set_size_inches((14, 9.5), forward=False)
-		fig.savefig("figs/" + title+".png", dpi=400)
+		fig.savefig("figs/" + title + " (Residuals).png", dpi=400)
+	
+
+	#INSET
+	plt.figure(fig_num-1)
+
+	try:
+		if(graph_labels['log_scale_x'] == True):
+			plt.xscale('log')
+	except:
+		pass
+
+	try:
+		if(graph_labels['log_scale_y'] == True):
+			plt.yscale('log')
+			
+	plt.plot(xdata, ydata, 'ko', markersize=1, color='#3F7F4C', label="Simulation Data")
+	plt.fill_between(xdata, ydata-yerror, ydata+yerror, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
+
+
+	plt.plot(xtheory, ytheory, 'k-', color='#CC4F1B')
+	# plt.legend(loc='upper right')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.title(title + " (Inset)")
+
+
+
+	if (savefigs):
+		fig = plt.gcf()
+		fig.set_size_inches((14, 9.5), forward=False)
+		fig.savefig("figs/" + title + " (Inset).png", dpi=500)
+
 	return
+
 
 def find_nearest(array, value):
     array = np.asarray(array)
@@ -262,16 +296,12 @@ for iteration in range(num_temps):
 
 	title    = "Spin Correlation vs. Distance"
 	y_label  = "Spin Correlation"
-	x_label  = "Distance (#)"
+	x_label  = "Distance (Spacing)"
 	fit_eq   = "$R(x) = A*e^{-x/\\xi}$"
 
 	# plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-	fig_num += 1
-	title    = "Spin Correlation vs. Distance (Residuals)"
-	y_label  = "Spin Correlation"
-	x_label  = "Distance (#)"
-	fit_eq   = ""
+	# fig_num += 1
 	# plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 	print("Spin Correlation Fit: END\n")
 	# plt.show()
@@ -350,11 +380,7 @@ fit_eq   = "$\\xi = C*|t|^{-\\nu}$"
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
 fig_num += 1
-title    = "Spin Correlation Length vs. Temperature (Residuals)"
-y_label  = "Spin Correlation Length"
-x_label  = "Temperature ($J/k_B$)"
-fit_eq   = ""
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_y=True)
 print("Spin Correlation Length Fit: END\n")
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -445,17 +471,13 @@ yfit = function(xfit, *Optimal_params)
 
 title    = "Spin Correlation near $T_c$ vs. Distance (Exponential Fit)"
 y_label  = "Spin Correlation"
-x_label  = "Distance (#)"
+x_label  = "Distance (Spacing)"
 fit_eq   = "$R(x) = A*e^{-x/\\xi}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Spin Correlation near $T_c$ vs. Distance (Exponential Fit: Residuals)"
-y_label  = "Spin Correlation"
-x_label  = "Distance (#)"
-fit_eq   = ""
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+fig_num += 2
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_y=True)
 print("Spin Correlation Exp Fit near T_c: END\n")
 # plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------	
@@ -526,17 +548,13 @@ yfit = function(xfit, *Optimal_params)
 
 title    = "Spin Correlation Near $T_C$ vs. Distance (Power Law Fit)"
 y_label  = "Spin Correlation"
-x_label  = "Distance (#)"
+x_label  = "Distance (Spacing)"
 fit_eq   = "$R(x) = C*|x|^{-\\eta}$"
 
 plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 
-fig_num += 1
-title    = "Spin Correlation Near $T_C$ vs. Distance (Power Law Fit: Residuals)"
-y_label  = "Spin Correlation"
-x_label  = "Distance (#)"
-fit_eq   = ""
-plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+fig_num += 2
+plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_y=True, log_scale_x=True)
 print("Spin Correlation Near T_c: END\n")
 plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
