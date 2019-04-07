@@ -4,6 +4,7 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 import math
 import csv
+import scipy.special as special
 
 
 # For displaying values
@@ -138,13 +139,55 @@ def optimal_fit(function, xdata, ydata, yerror, parameter_estimates, parameter_r
 #FITS: #t = (T - T_c)/T_c
 #Energy Full Fit
 #-------------------------------------------------------------------------
-def kappa_calc(x, *parameters):
+# def kappa_calc(x, *parameters):
+# 	T     = x
+# 	return 2.0*np.sinh(2.0/T)/((np.cosh(2.0/T))**2.0) 
+
+# def K_one_calc(x, *parameters):
+# 	kappa = x
+# 	return integrate.quad(lambda phi: (1-(kappa**2.0)*((np.sin(phi))**2))**(-1.0/2.0), 0.0, np.pi/2.0)[0]
+
+# def energy_func(x, *parameters):
+# 	# scale = parameters[0]
+# 	# add   = parameters[1]
+
+# 	#number
+# 	if (np.isscalar(x)):
+# 		T = x
+# 		kappa  = kappa_calc(T)
+# 		k_one  = K_one_calc(kappa)
+# 		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+# 		return answer
+
+# 	#Array
+# 	T_set = x
+# 	ans   = [0 for T in T_set]
+# 	data_points = len(ans)
+# 	for i in range(data_points):
+# 		T = T_set[i]
+# 		kappa  = kappa_calc(T)
+# 		k_one  = K_one_calc(kappa)
+# 		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+# 		ans[i] = answer
+# 	ans = np.array(ans)
+# 	# return scale*ans + add
+# 	return ans
+def z_calc(x, *parameters):
 	T     = x
-	return 2.0*np.sinh(2.0/T)/((np.cosh(2.0/T))**2.0) 
+	N     = parameters[0]
+	Delta = 5.0/(4.0*np.sqrt(N)) 
+	return (2.0/T)*(1.0/(1.0 + Delta))
+
+def kappa_calc(x, *parameters):
+	z     = x
+	N     = parameters[0]
+	delta = (np.pi**2.0)/N
+	return 2.0*np.sinh(z)/((1.0+delta)*(np.cosh(z))**2.0) 
 
 def K_one_calc(x, *parameters):
 	kappa = x
-	return integrate.quad(lambda phi: (1-(kappa**2.0)*((np.sin(phi))**2))**(-1.0/2.0), 0.0, np.pi/2.0)[0]
+	# return (1.0/(2.0*np.pi))*integrate.quad(lambda phi: np.log(1.0 + np.sqrt(1.0 - ((kappa**2.0)*((np.cos(phi))**2.0)))), 0.0, np.pi)[0]
+	return special.ellipk(kappa)
 
 def energy_func(x, *parameters):
 	# scale = parameters[0]
@@ -152,10 +195,13 @@ def energy_func(x, *parameters):
 
 	#number
 	if (np.isscalar(x)):
-		T = x
-		kappa  = kappa_calc(T)
+		T      = x
+		N      = parameters[0]
+		z      = z_calc(T, N)
+		Delta  = 5.0/(4.0*np.sqrt(N))
+		kappa  = kappa_calc(z, N)
 		k_one  = K_one_calc(kappa)
-		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+		answer = (-1.0/(1.0 + Delta))*(2.0*np.tanh(z) + (((np.sinh(z))**2.0 - 1.0)/(np.sinh(z)*np.cosh(z)))*((2.0/np.pi)*k_one - 1.0))
 		return answer
 
 	#Array
@@ -163,15 +209,17 @@ def energy_func(x, *parameters):
 	ans   = [0 for T in T_set]
 	data_points = len(ans)
 	for i in range(data_points):
-		T = T_set[i]
-		kappa  = kappa_calc(T)
+		T      = T_set[i]
+		N      = parameters[0]
+		z      = z_calc(T, N)
+		Delta  = 5.0/(4.0*np.sqrt(N))
+		kappa  = kappa_calc(z, N)
 		k_one  = K_one_calc(kappa)
-		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
+		# answer =  -1.0*np.log(2)/2.0 - np.log(np.cosh(z)) - k_one
+		answer = (-1.0/(1.0 + Delta))*(2.0*np.tanh(z) + (((np.sinh(z))**2.0 - 1.0)/(np.sinh(z)*np.cosh(z)))*((2.0/np.pi)*k_one - 1.0))
 		ans[i] = answer
 	ans = np.array(ans)
-	# return scale*ans + add
 	return ans
-
 #-------------------------------------------------------------------------
 
 def mag_func(x, *parameters):
@@ -419,14 +467,60 @@ fig_num                   = 1
 # print("Energy Full Fit: END\n")
 # #-----------------------------------------------------------------------------------------------------------------------------------------
 
-#Energy Full Fit
+# #Energy Full Fit (OLD)
+# #-----------------------------------------------------------------------------------------------------------------------------------------
+# print("Energy Full Fit: BEGIN\n")
+# scale_constant            = 1.0
+# add_constant              = 1.0
+# parameter_estimates       = []
+# var                       = []
+# parameter_bound_ranges    = ([],[])
+
+
+# xdata_data                = T_E
+# ydata_data                = E_mean
+# yerror_data               = E_std
+# function                  = energy_func
+
+# xdata_fit                 = xdata_data
+# ydata_fit                 = ydata_data
+# yerror_fit                = yerror_data
+
+
+
+# Optimal_params        = []
+# Optimal_params_err    = []
+# Optimal_params_names  = []
+
+# chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
+# Optimal_params.append(chi_square_min)
+# Optimal_params_err.append("")
+# Optimal_params_names.append("Min Chi Square")
+
+
+# xfit = xdata_fit
+# yfit = function(xfit, *Optimal_params)
+
+# title    = "Energy vs. Temperature (Analytic Curve)"
+# y_label  = "Energy $E$ (J)"
+# x_label  = "Temperature $T$ ($J/k_B$)"
+# # fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
+# fit_eq   = "$E(T)$"
+
+# fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
+# fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+
+# print("Energy Full Fit: END\n")
+# #-----------------------------------------------------------------------------------------------------------------------------------------
+#Energy Full Fit (ONLINE)
 #-----------------------------------------------------------------------------------------------------------------------------------------
 print("Energy Full Fit: BEGIN\n")
-scale_constant            = 1.0
-add_constant              = 1.0
-parameter_estimates       = []
-var                       = []
-parameter_bound_ranges    = ([],[])
+N = 100
+
+parameter_estimates       = [N]
+var                       = [[-100], [100000000]]
+
+parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
 
 
 xdata_data                = T_E
@@ -440,9 +534,11 @@ yerror_fit                = yerror_data
 
 
 
-Optimal_params        = []
-Optimal_params_err    = []
-Optimal_params_names  = []
+popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+Optimal_params        = [x for x in popt]
+Optimal_params_err    = [x for x in perr]
+Optimal_params_names  = ["$N$"]
+
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
@@ -457,7 +553,7 @@ title    = "Energy vs. Temperature (Analytic Curve)"
 y_label  = "Energy $E$ (J)"
 x_label  = "Temperature $T$ ($J/k_B$)"
 # fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
-fit_eq   = "$E(T)$"
+fit_eq   = "$E(T, N)$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
