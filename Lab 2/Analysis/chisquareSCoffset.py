@@ -119,7 +119,7 @@ def eta_func(x, *parameters):
 	return y
 
 #-------------------------------------------------------------------------
-savefigs = False
+savefigs = True
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -201,7 +201,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 			T_c   = graph_labels['reduce_temp']
 			xdata = [np.abs((T - T_c)/T_c) for T in xdata]
 			xtheory = [np.abs((T - T_c)/T_c) for T in xtheory]
-			plt.xlabel("Reduced Temperature (Unitless)")
+			plt.xlabel("Reduced Temperature $t = \\frac{T - T_c}{T_c}$ (Unitless)")
 	except:
 		pass
 
@@ -210,7 +210,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 			offset = graph_labels['y_offset']
 			ydata = [y - offset for y in ydata]
 			ytheory = [y - offset for y in ytheory]
-			plt.ylabel("Spin Correlation Offset by " +  ("{:.2E}".format(Decimal(offset))) + " (Unitless)")
+			plt.ylabel("Spin Correlation $R(x)$ Offset by " +  ("{:.2E}".format(Decimal(offset))) + " (Unitless)")
 	except:
 		pass
 
@@ -240,11 +240,12 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	
 	
 	
-	
+	title = title.replace("$", "")
+	title = title.replace("/", ":")
 
 	if (savefigs):
 		fig = plt.gcf()
-		fig.set_size_inches((14, 9.5), forward=False)
+		fig.set_size_inches((15.35, 9.82), forward=False)
 		fig.savefig("figs/" + title + ".png", dpi=500)
 
 	return fig_num  + 1
@@ -325,8 +326,8 @@ for iteration in range(num_temps):
 	yfit = function(xfit, *Optimal_params)
 
 	title    = "Spin Correlation vs. Distance"
-	y_label  = "Spin Correlation"
-	x_label  = "Distance (Spacing)"
+	y_label  = "Spin Correlation $R(x)$ (Unitless)"
+	x_label  = "Distance $x$ (Spacing)"
 	fit_eq   = "$R(x) = A*e^{-(x + C)/\\xi} + B$"
 
 	if (iteration == 50 or iteration == num_temps - 50):
@@ -403,9 +404,9 @@ xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
 title    = "Spin Correlation Length vs. Temperature"
-y_label  = "Spin Correlation Length"
-x_label  = "Temperature ($J/k_B$)"
-fit_eq   = "$\\xi = C*|t|^{-\\nu}$"
+y_label  = "Spin Correlation Length $\\xi$ (Spacing)"
+x_label  = "Temperature $T$ ($J/k_B$)"
+fit_eq   = "$\\xi = C*|t|^{-\\nu},\\ t = \\frac{T - T_c}{T_c}$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label,  log_scale_x=True, log_scale_y=True, reduce_temp=Optimal_params[0])
@@ -502,8 +503,8 @@ xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
 title    = "Spin Correlation near T_c ($T = " + str(T_SC[iteration]) + " (J/k_B)$) vs. Distance (Exponential Fit)"
-y_label  = "Spin Correlation"
-x_label  = "Distance (Spacing)"
+y_label  = "Spin Correlation $R(x)$ (Unitless)"
+x_label  = "Distance $x$ (Spacing)"
 fit_eq   = "$R(x) = A*e^{-(x + C)/\\xi} + B$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
@@ -576,8 +577,8 @@ xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
 title    = "Spin Correlation near T_c ($T = " + str(T_SC[iteration]) + " (J/k_B)$) vs. Distance (Power Law Fit)"
-y_label  = "Spin Correlation"
-x_label  = "Distance (Spacing)"
+y_label  = "Spin Correlation $R(x)$ (Unitless)"
+x_label  = "Distance $x$ (Spacing)"
 fit_eq   = "$R(x) = C*|x|^{-\\eta}$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)

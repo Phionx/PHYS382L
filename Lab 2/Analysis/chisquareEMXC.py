@@ -147,8 +147,8 @@ def K_one_calc(x, *parameters):
 	return integrate.quad(lambda phi: (1-(kappa**2.0)*((np.sin(phi))**2))**(-1.0/2.0), 0.0, np.pi/2.0)[0]
 
 def energy_func(x, *parameters):
-	scale = parameters[0]
-	add   = parameters[1]
+	# scale = parameters[0]
+	# add   = parameters[1]
 
 	#number
 	if (np.isscalar(x)):
@@ -169,7 +169,8 @@ def energy_func(x, *parameters):
 		answer =  -2.0*np.tanh(1.0/T) - (((np.sinh(2.0/T))**2.0 - 1.0)/((np.sinh(2.0/T))*(np.cosh(2.0/T))))*((2.0/np.pi)*k_one - 1.0)
 		ans[i] = answer
 	ans = np.array(ans)
-	return scale*ans + add
+	# return scale*ans + add
+	return ans
 
 #-------------------------------------------------------------------------
 
@@ -244,7 +245,7 @@ def eta_func(x, *parameters):
 	return y
 
 #-------------------------------------------------------------------------
-savefigs = False
+savefigs = True
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -265,7 +266,7 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 	plt.fill_between(xdata, ydata-yerror, ydata+yerror, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
 
 	#Best Theory
-	theory_label = "Theory"
+	theory_label = "Theory:"
 
 	
 	theory_label += " " + fit_eq
@@ -278,7 +279,12 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 			theory_label += " $\\pm$ " + (("{:.2E}".format(Decimal(params_err[i]))))
 
 	plt.plot(xtheory, ytheory, 'k-', color='#CC4F1B', label=theory_label)
-	plt.legend(loc=1, prop={'size': 8})
+	
+	try:
+		if (graph_labels['custom_placement']):
+			plt.legend(loc=graph_labels['custom_placement'], prop={'size': 8})
+	except:
+		plt.legend(loc=1, prop={'size': 8})
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
 	plt.title(title)
@@ -326,7 +332,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 			T_c   = graph_labels['reduce_temp']
 			xdata = [np.abs((T - T_c)/T_c) for T in xdata]
 			xtheory = [np.abs((T - T_c)/T_c) for T in xtheory]
-			plt.xlabel("Reduced Temperature (Unitless)")
+			plt.xlabel("Reduced Temperature $t = \\frac{T - T_c}{T_c}$ (Unitless)")
 	except:
 		pass
 
@@ -346,12 +352,13 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	
 	
 	
-	
+	title = title.replace("$", "")
+	title = title.replace("/", ":")
 	
 
 	if (savefigs):
 		fig = plt.gcf()
-		fig.set_size_inches((14, 9.5), forward=False)
+		fig.set_size_inches((15.35, 9.82), forward=False)
 		fig.savefig("figs/" + title + ".png", dpi=500)
 
 	return fig_num  + 1
@@ -367,15 +374,61 @@ def find_nearest(array, value):
 #-----------------------------------------------------------------------------------------------------------------------------------------
 fig_num                   = 1
 
+# #Energy Full Fit
+# #-----------------------------------------------------------------------------------------------------------------------------------------
+# print("Energy Full Fit: BEGIN\n")
+# scale_constant            = 1.0
+# add_constant              = 1.0
+# parameter_estimates       = [scale_constant, add_constant]
+# var                       = [[-10000, -10000],[10000, 10000]]
+# parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
+
+
+# xdata_data                = T_E
+# ydata_data                = E_mean
+# yerror_data               = E_std
+# function                  = energy_func
+
+# xdata_fit                 = xdata_data
+# ydata_fit                 = ydata_data
+# yerror_fit                = yerror_data
+
+
+# popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+# Optimal_params        = [x for x in popt]
+# Optimal_params_err    = [x for x in perr]
+# Optimal_params_names  = ["Scale Constant A", "Add Constant B"]
+
+# chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
+# Optimal_params.append(chi_square_min)
+# Optimal_params_err.append("")
+# Optimal_params_names.append("Min Chi Square")
+
+
+# xfit = xdata_fit
+# yfit = function(xfit, *Optimal_params)
+
+# title    = "Energy vs. Temperature (Analytic Curve)"
+# y_label  = "Energy (J)"
+# x_label  = "Temperature (J/$k_B$)"
+# fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
+
+# fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
+# fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+
+# print("Energy Full Fit: END\n")
+# #-----------------------------------------------------------------------------------------------------------------------------------------
+
 #Energy Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
 print("Energy Full Fit: BEGIN\n")
 scale_constant            = 1.0
 add_constant              = 1.0
-parameter_estimates       = [scale_constant, add_constant]
+parameter_estimates       = []
+var                       = []
+parameter_bound_ranges    = ([],[])
 
-var                       = [[-10000, -10000],[10000, 10000]]
-parameter_bound_ranges    = ([parameter_estimates[i] + var[0][i] for i in range(len(var[0]))], [parameter_estimates[i] + var[1][i] for i in range(len(var[1]))])
+
 xdata_data                = T_E
 ydata_data                = E_mean
 yerror_data               = E_std
@@ -386,10 +439,10 @@ ydata_fit                 = ydata_data
 yerror_fit                = yerror_data
 
 
-popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
-Optimal_params        = [x for x in popt]
-Optimal_params_err    = [x for x in perr]
-Optimal_params_names  = ["Scale Constant A", "Add Constant B"]
+
+Optimal_params        = []
+Optimal_params_err    = []
+Optimal_params_names  = []
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
@@ -400,16 +453,18 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "Analytic Fit of Energy vs. Temperature"
-y_label  = "Energy (J)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
+title    = "Energy vs. Temperature (Analytic Curve)"
+y_label  = "Energy $E$ (J)"
+x_label  = "Temperature $T$ ($J/k_B$)"
+# fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
+fit_eq   = "$E(T)$"
 
-fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
+fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 
 print("Energy Full Fit: END\n")
 #-----------------------------------------------------------------------------------------------------------------------------------------
+
 
 #Magnetization Full Fit
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -455,10 +510,10 @@ xfit = xdata_fit
 yfit = [function(x) for x in xfit]
 
 
-title    = "Analytic Fit of Magnetization vs. Temperature"
-y_label  = "Magnetization (Units)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "M(T)"
+title    = "Magnetization vs. Temperature (Analytic Curve)"
+y_label  = "Magnetization $M$ (Unitless)"
+x_label  = "Temperature $T$ ($J/k_B$)"
+fit_eq   = "$M(T)$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
@@ -507,7 +562,7 @@ yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), 
 popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
 Optimal_params        = [x for x in popt]
 Optimal_params_err    = [x for x in perr]
-Optimal_params_names  = ["$T_c$", "$\\beta$", "Constant C"]
+Optimal_params_names  = ["$T_c$", "$\\beta$", "Constant $C$"]
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
@@ -518,10 +573,10 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "Magnetization vs. Temperature"
-y_label  = "Magnetization (Units)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "$|M| = C|t|^{\\beta}$"
+title    = "Magnetization vs. Temperature (Power Law Fit)"
+y_label  = "Magnetization $M$ (Unitless)"
+x_label  = "Temperature $T$ ($J/k_B$)"
+fit_eq   = "$|M| = C|t|^{\\beta},\\ t = \\frac{T - T_c}{T_c}$"
 
 fig_num =plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True, reduce_temp=Optimal_params[0])
@@ -571,7 +626,7 @@ yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), 
 popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
 Optimal_params        = [x for x in popt]
 Optimal_params_err    = [x for x in perr]
-Optimal_params_names  = ["$T_c$", "$\\gamma$", "Constant C"]
+Optimal_params_names  = ["$T_c$", "$\\gamma$", "Constant $C$"]
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
@@ -582,10 +637,10 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "Susceptibility vs. Temperature"
-y_label  = "Susceptibility (Units)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "$\\chi = C|t|^{-\\gamma}$"
+title    = "Susceptibility vs. Temperature (Power Law Fit)"
+y_label  = "Susceptibility $\\chi$ (1/J)"
+x_label  = "Temperature $T$ (J/$k_B$)"
+fit_eq   = "$\\chi = C|t|^{-\\gamma},\\ t = \\frac{T - T_c}{T_c}$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True, reduce_temp=Optimal_params[0])
@@ -597,10 +652,10 @@ print("Susceptibility Power Law Fit: END\n")
 print("Specific Heat Power Law Fit: BEGIN\n")
 
 
-title    = "Specific Heat vs. Temperature (Less than $T_c$)"
-y_label  = "Specific Heat (Units)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "$\\chi = C|t|^{-\\alpha}$"
+title    = "Specific Heat vs. Temperature (Power Law Fit: Less than $T_c$)"
+y_label  = "Specific Heat $c_V$ ($k_B$)"
+x_label  = "Temperature $T$ ($J/k_B$)"
+fit_eq   = "$c_V = C|t|^{-\\alpha},\\ t = \\frac{T - T_c}{T_c}$"
 
 #LEFT SIDE
 #--------------------------------------------------------------------------------------------------
@@ -644,7 +699,7 @@ yerror_fit                = np.concatenate((yerror_fit_left, yerror_fit_right), 
 popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
 Optimal_params        = [x for x in popt]
 Optimal_params_err    = [x for x in perr]
-Optimal_params_names  = ["$T_c$ (Left)", "$\\alpha$ (Left)", "Constant C (Left)"]
+Optimal_params_names  = ["$T_c$ (Left)", "$\\alpha$ (Left)", "Constant $C$ (Left)"]
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
 Optimal_params.append(chi_square_min)
@@ -659,7 +714,7 @@ fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_para
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label, log_scale_x=True, log_scale_y=True, reduce_temp=Optimal_params[0])
 
 #RIGHT SIDE
-title    = "Specific Heat vs. Temperature (Greater than $T_c$)"
+title    = "Specific Heat vs. Temperature (Power Law Fit: Greater than $T_c$)"
 #--------------------------------------------------------------------------------------------------
 Estimate_T_c_alpha        = 2.269
 Estimate_alpha            = 0.0
@@ -707,7 +762,7 @@ for x in perr:
 
 Optimal_params_names.append("$T_c$ (Right)")
 Optimal_params_names.append("$\\alpha$ (Right)")
-Optimal_params_names.append("Constant C (Right)")
+Optimal_params_names.append("Constant $C$ (Right)")
 
 
 chi_square_min        = chi_square(function, xdata_fit2, ydata_fit2, yerror_fit2, *Optimal_params[4:])
@@ -725,10 +780,10 @@ fig_num = plot_residuals(xdata_fit2, ydata_fit2, yerror_fit2, xfit, yfit, fig_nu
 
 
 #BOTH SIDES
-title    = "Specific Heat vs. Temperature"
-y_label  = "Specific Heat (Units)"
-x_label  = "Temperature (J/$k_B$)"
-fit_eq   = "$\\chi = C|t|^{-\\alpha}$"
+title    = "Specific Heat vs. Temperature (Power Law Fit)"
+y_label  = "Specific Heat $c_V$ ($k_B$)"
+x_label  = "Temperature $T$ (J/$k_B$)"
+fit_eq   = "$c_V = C|t|^{-\\alpha},\\ t = \\frac{T - T_c}{T_c}$"
 
 
 xfit = np.concatenate((xdata_fit, xdata_fit2), axis=None)
