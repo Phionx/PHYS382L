@@ -133,6 +133,9 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 	xtheory = np.array(xtheory)
 	ytheory = np.array(ytheory)
 	
+	plt.rc('xtick',labelsize=10)
+	plt.rc('ytick',labelsize=10)
+
 	#Experiment
 	fig = plt.figure(fig_num)
 	fullPlot = fig.add_subplot(2,2,1)
@@ -154,9 +157,9 @@ def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_
 
 	plt.plot(xtheory, ytheory, 'k-', color='#CC4F1B', label=theory_label)
 	plt.legend(loc=1, prop={'size': 8})
-	plt.xlabel(x_label)
-	plt.ylabel(y_label)
-	plt.title(title)
+	plt.xlabel(x_label, fontsize=10)
+	plt.ylabel(y_label, fontsize=10)
+	plt.title(title, fontsize=12)
 
 	return fig_num
 	
@@ -175,6 +178,9 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	data_points = len(xdata)
 
 	#RESIDUALS
+	plt.rc('xtick',labelsize=12)
+	plt.rc('ytick',labelsize=12)
+
 	print("xdata len: " + str(len(xdata)) + " " + "ydata len: " + str(len(ydata)))
 	# print("residuals(data): " + str(ydata))
 	# print("residuals(theory): " + str(ytheory))
@@ -183,25 +189,25 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 	fig     = plt.figure(fig_num)
 	resPlot = fig.add_subplot(2,2,2)
 	plt.plot(xres, yres, 'k-', color='#3F7F4C')
-	plt.xlabel(x_label)
-	plt.ylabel(y_label)
-	plt.title(title + " (Residuals)")
+	plt.xlabel(x_label, fontsize=10)
+	plt.ylabel(y_label, fontsize=10)
+	plt.title(title + " (Residuals)", fontsize=12)
 
 	#INSET
 	insetPlot = fig.add_subplot(2,2,3)
 
 
 
-	plt.xlabel(x_label)
-	plt.ylabel(y_label)
-	plt.title(title + " (Inset)")
+	plt.xlabel(x_label, fontsize=10)
+	plt.ylabel(y_label, fontsize=10)
+	plt.title(title + " (Inset)", fontsize=12)
 
 	try:
 		if(graph_labels['reduce_temp']): #note: will be false if reduce_temp = 0
 			T_c   = graph_labels['reduce_temp']
 			xdata = [np.abs((T - T_c)/T_c) for T in xdata]
 			xtheory = [np.abs((T - T_c)/T_c) for T in xtheory]
-			plt.xlabel("Reduced Temperature $t = \\frac{T - T_c}{T_c}$ (Unitless)")
+			plt.xlabel("Reduced Temperature $t = \\frac{T - T_c}{T_c}$ (Unitless)", fontsize=10)
 	except:
 		pass
 
@@ -210,7 +216,7 @@ def plot_residuals(xdata, ydata, yerror, xtheory, ytheory, fig_num, **graph_labe
 			offset = graph_labels['y_offset']
 			ydata = [y - offset for y in ydata]
 			ytheory = [y - offset for y in ytheory]
-			plt.ylabel("Spin Correlation $R(x)$ Offset by " +  ("{:.2E}".format(Decimal(offset))) + " (Unitless)")
+			plt.ylabel("Spin Correlation $R(x)$ Offset by " +  ("{:.2E}".format(Decimal(offset))) + " (Unitless)", fontsize=10)
 	except:
 		pass
 
