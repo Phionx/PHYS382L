@@ -12,7 +12,7 @@ from decimal import Decimal
 #DATA PARSING
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #T,E,M,C,X  - Temperature, Energy, Magnetism, Specific Heat, Susceptibility
-EMfile = 'Data/NDep/4_05_N50_1.20T3.00_EM_v0.csv'
+EMfile = 'Data/APR:3:2019/CLEANED_3_30_N100_1.20T3.00_EM_v1.csv'
 with open(EMfile, 'r') as csvEMFile:
 	readerEM = csv.reader(csvEMFile)
 	readerEM   = list(readerEM)
@@ -219,6 +219,58 @@ def energy_func(x, *parameters):
 		ans[i] = answer
 	ans = np.array(ans)
 	return ans
+
+
+
+def z_calc(x, *parameters):
+	T     = x
+	N     = parameters[0]
+	Delta = 5.0/(4.0*np.sqrt(N)) 
+	return (2.0/T)*(1.0/(1.0 + Delta))
+
+def kappa_calc(x, *parameters):
+	z     = x
+	N     = parameters[0]
+	delta = (np.pi**2.0)/N
+	return 2.0*np.sinh(z)/((1.0+delta)*(np.cosh(z))**2.0) 
+
+def K_one_calc(x, *parameters):
+	kappa = x
+	# return (1.0/(2.0*np.pi))*integrate.quad(lambda phi: np.log(1.0 + np.sqrt(1.0 - ((kappa**2.0)*((np.cos(phi))**2.0)))), 0.0, np.pi)[0]
+	return special.ellipk(kappa)
+
+def energy_func(x, *parameters):
+	# scale = parameters[0]
+	# add   = parameters[1]
+
+	#number
+	if (np.isscalar(x)):
+		T      = x
+		N      = parameters[0]
+		z      = z_calc(T, N)
+		Delta  = 5.0/(4.0*np.sqrt(N))
+		kappa  = kappa_calc(z, N)
+		k_one  = K_one_calc(kappa)
+		answer = (-1.0/(1.0 + Delta))*(2.0*np.tanh(z) + (((np.sinh(z))**2.0 - 1.0)/(np.sinh(z)*np.cosh(z)))*((2.0/np.pi)*k_one - 1.0))
+		return answer
+
+	#Array
+	T_set = x
+	ans   = [0 for T in T_set]
+	data_points = len(ans)
+	for i in range(data_points):
+		T      = T_set[i]
+		N      = parameters[0]
+		z      = z_calc(T, N)
+		Delta  = 5.0/(4.0*np.sqrt(N))
+		kappa  = kappa_calc(z, N)
+		k_one  = K_one_calc(kappa)
+		# answer =  -1.0*np.log(2)/2.0 - np.log(np.cosh(z)) - k_one
+		answer = (-1.0/(1.0 + Delta))*(2.0*np.tanh(z) + (((np.sinh(z))**2.0 - 1.0)/(np.sinh(z)*np.cosh(z)))*((2.0/np.pi)*k_one - 1.0))
+		ans[i] = answer
+	ans = np.array(ans)
+	return ans
+
 #-------------------------------------------------------------------------
 
 def mag_func(x, *parameters):
@@ -440,7 +492,7 @@ Optimal_params_names  = []
 
 
 xfit = xdata_fit
-yfit = function(xfit, 100)
+yfit = function(xfit, 10000000000000000)
 
 title    = "Analytic Fit of Energy vs. Temperature (N = 50)"
 y_label  = "Energy (J)"
