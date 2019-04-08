@@ -492,7 +492,7 @@ Optimal_params_names  = []
 
 
 xfit = xdata_fit
-yfit = function(xfit, 10000000000000000)
+yfit = function(xfit, 10**10)
 
 title    = "Analytic Fit of Energy vs. Temperature (N = 50)"
 y_label  = "Energy (J)"
