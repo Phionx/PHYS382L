@@ -72,7 +72,7 @@ def chi_square(function, xdata, ydata, yerror, *parameter_vals):
 
 def optimal_fit(function, xdata, ydata, yerror, parameter_estimates, parameter_ranges):
 	# popt, pcov = opt.curve_fit(function, xdata, ydata, sigma =yerror, p0=parameter_estimates,  bounds=parameter_ranges)
-	popt, pcov = opt.curve_fit(function, xdata, ydata, p0=parameter_estimates, sigma=yerror, bounds=parameter_ranges)
+	popt, pcov = opt.curve_fit(function, xdata, ydata, p0=parameter_estimates, sigma=yerror, maxfev=10**7)
 	perr = np.sqrt(np.diag(pcov))
 	return (popt, perr)
 
@@ -89,6 +89,7 @@ def pi_pulse_func(x, *parameters):
 	A      = parameters[3]
 	phi    = parameters[4]
 	D      = parameters[5]
+	print(str([tau, delta, t_0, A, phi, D]))
 
 	ans    = 1.0*A*np.exp(-1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
 	return ans
@@ -132,13 +133,27 @@ def pi_2_pulse_func(x, *parameters):
 	phi    = parameters[4]
 	D      = parameters[5]
 
-	if (t < t_0):
-		ans    = 1.0*A*np.exp( 1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
-	elif (t >= t_0):
-		ans    = 1.0*A*np.exp(-1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
-	
-	return ans
+	if (np.isscalar(t)):
+		if (t < t_0):
+			ans    = 1.0*A*np.exp( 1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
+		elif (t >= t_0):
+			ans    = 1.0*A*np.exp(-1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
+		return ans
 
+	T_set = x
+	answer   = [0 for T in T_set]
+	data_points = len(answer)
+	for i in range(data_points):
+		t      = T_set[i]
+		if (t < t_0):
+			ans    = 1.0*A*np.exp( 1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
+		elif (t >= t_0):
+			ans    = 1.0*A*np.exp(-1.0*(t-t_0)/tau)*np.sin(delta*(t-t_0) + phi) + D
+		answer[i] = ans
+	answer = np.array(answer)
+	return answer
+
+	
 def pi_2_pulse_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func cause t = t_0
 	t      = x
 	tau    = parameters[0]
@@ -327,90 +342,94 @@ sigma_Y_peaks       = []
 sigma_Y_peaks_times = []
 
 
+
 for iteration in range(num_files):
 	#PI PULSE FITTING (t < t_pulse):
 	time_pulse                = time_pulses[i]
 	print("t_sweep = " + str(time_pulse) + "\n")
 	print("\tSigma_X Fit : BEGIN\n")
 
-	Estimate_tau    = 1
+	Estimate_tau    = 10
 	Estimate_delta  = 1
-	Estimate_t_0    = 1
+	Estimate_t_0    = .018
 	Estimate_A      = 1
 	Estimate_phi    = 1
 	Estimate_D      = 1
 
 	parameter_estimates       = [Estimate_tau, Estimate_delta, Estimate_t_0, Estimate_A, Estimate_phi , Estimate_D]
-	var                       = [[-10**10, 10**10] for x in range(len(parameter_estimates))]
+	var                       = [[-np.inf, np.inf] for x in range(len(parameter_estimates))]
 	parameter_bound_ranges    = ([parameter_estimates[i] + var[i][0] for i in range(len(var))], [parameter_estimates[i] + var[i][1] for i in range(len(var))])
 
-	#FIT X DATA (t < t_sweep)
-	#--------------------------------------------------------------------------------------------------------------------------------------
-	xdata_data                = times[iteration]
-	ydata_data                = sigma_X[iteration]
-	data_points               = len(xdata_data)
-	yerror_data               = [.005 for x in range(data_points)] #DAQ Error
-	function                  = pi_pulse_func
+	print(parameter_bound_ranges)
+	# #FIT X DATA (t < t_sweep)
+	# #--------------------------------------------------------------------------------------------------------------------------------------
+	# xdata_data                = times[iteration]
+	# ydata_data                = sigma_X[iteration]
+	# data_points               = len(xdata_data)
+	# yerror_data               = [.005 for x in range(data_points)] #DAQ Error
+	# function                  = pi_pulse_func
 	
 
-	#TAKE RANGE OF TOTAL DATA TO FIT
-	start_index               = find_nearest(xdata_data, .0008)
-	end_index                 = find_nearest(xdata_data, time_pulse-.0001)
 
-	print(time_pulse - .0001)
-	xdata_fit                 = xdata_data[start_index:end_index]
-	ydata_fit                 = ydata_data[start_index:end_index]
-	yerror_fit                = yerror_data[start_index:end_index]
+	# #TAKE RANGE OF TOTAL DATA TO FIT
+	# start_index               = find_nearest(xdata_data, .0008)
+	# end_index                 = find_nearest(xdata_data, time_pulse-.0001)
 
-	plt.errorbar(xdata_data, ydata_data,yerror_data, fmt='b')
-	plt.errorbar(xdata_fit, ydata_fit,yerror_fit, fmt='r')
-	plt.show()
+	# print(time_pulse - .0001)
+	# xdata_fit                 = xdata_data[start_index:end_index]
+	# ydata_fit                 = ydata_data[start_index:end_index]
+	# yerror_fit                = yerror_data[start_index:end_index]
+
+	# # plt.plot(xdata_fit, function(xdata_fit, *parameter_estimates), 'g')
+	# # plt.errorbar(xdata_data, ydata_data,yerror_data, fmt='b')
+	# # plt.errorbar(xdata_fit, ydata_fit,yerror_fit, fmt='r')
+	# # plt.show()
 	
-	popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
-	Optimal_params        = [x for x in popt]
-	Optimal_params_err    = [x for x in perr]
-	Optimal_params_names  = ["$\\tau$", "$\\Delta$", "$t_0$", "$A$", "$\\phi$", "$D$"]
+	# popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
+	# Optimal_params        = [x for x in popt]
+	# Optimal_params_err    = [x for x in perr]
+	# Optimal_params_names  = ["$\\tau$", "$\\Delta$", "$t_0$", "$A$", "$\\phi$", "$D$"]
 
 
-	chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
-	Optimal_params.append(chi_square_min)
-	Optimal_params_err.append("")
-	Optimal_params_names.append("Min Chi Square")
+	# chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
+	# Optimal_params.append(chi_square_min)
+	# Optimal_params_err.append("")
+	# Optimal_params_names.append("Min Chi Square")
 
 
-	xfit = xdata_fit
-	yfit = function(xfit, *Optimal_params)
+	# xfit = xdata_fit
+	# yfit = function(xfit, *Optimal_params)
 
-	title    = "$\\sigma_x$ vs Time for $t_{sweep} = " + str(time_pulse) +  "$ (s)"
-	y_label  = "$\\sigma_x$ (V)"
-	x_label  = "Time $t$ (s)"
-	# fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
-	fit_eq   = "$Ae^{-(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$"
+	# title    = "$\\sigma_x$ vs Time for $t_{sweep} = " + str(time_pulse) +  "$ (s)"
+	# y_label  = "$\\sigma_x$ (V)"
+	# x_label  = "Time $t$ (s)"
+	# # fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
+	# fit_eq   = "$Ae^{-(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$"
 
-	fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
-	fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
+	# fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
+	# fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 
-	#SAVE RUN DATA
-	X_T_2_stars.append(Optimal_params[0])	
-	X_T_2_stars_err.append(Optimal_params_err[0])
+	# #SAVE RUN DATA
+	# X_T_2_stars.append(Optimal_params[0])	
+	# X_T_2_stars_err.append(Optimal_params_err[0])
 
-	X_deltas.append(Optimal_params[1])
-	X_deltas_err.append(Optimal_params_err[1])
+	# X_deltas.append(Optimal_params[1])
+	# X_deltas_err.append(Optimal_params_err[1])
 
-	X_T_2_stars.append(Optimal_params[0])
-	X_T_2_stars_err.append(Optimal_params_err[0])	
-	X_deltas.append(Optimal_params[1])
-	X_deltas_err.append(Optimal_params_err[1])
+	# X_T_2_stars.append(Optimal_params[0])
+	# X_T_2_stars_err.append(Optimal_params_err[0])	
+	# X_deltas.append(Optimal_params[1])
+	# X_deltas_err.append(Optimal_params_err[1])
 
-	t_0     = Optimal_params[2]
-	t_0_err = Optimal_params_err[2]
-	sigma_X_peaks_times.append(t_0)
-	sigma_X_peaks_times_err.append(t_0_err)
-	sigma_X_peaks.append(pi_pulse_func(t_0, *Optimal_params)) #(t_0, sigma_x(t_0))
-	sigma_X_peaks_err.append(pi_pulse_err_func(t_0, t_0_err, *(Optimal_params + Optimal_params_err)))
+	# t_0     = Optimal_params[2]
+	# t_0_err = Optimal_params_err[2]
+	# sigma_X_peaks_times.append(t_0)
+	# sigma_X_peaks_times_err.append(t_0_err)
+	# sigma_X_peaks.append(pi_pulse_func(t_0, *Optimal_params)) #(t_0, sigma_x(t_0))
+	# sigma_X_peaks_err.append(pi_pulse_err_func(t_0, t_0_err, *(Optimal_params + Optimal_params_err)))
 
 	
-	plt.show()
+	# plt.show()
 
 
 	#FIT X DATA (t > t_sweep)
@@ -423,7 +442,7 @@ for iteration in range(num_files):
 	
 
 	#TAKE RANGE OF TOTAL DATA TO FIT
-	start_index               = find_nearest(xdata_data, time_pulse + .006)
+	start_index               = find_nearest(xdata_data, time_pulse + .012)
 	# end_index                 = find_nearest(xdata_data, time_pulse-.0001)
 
 	xdata_fit                 = xdata_data[start_index:]
@@ -451,7 +470,7 @@ for iteration in range(num_files):
 	y_label  = "$\\sigma_x$ (V)"
 	x_label  = "Time $t$ (s)"
 	# fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
-	fit_eq   = "$(t < t_{\\text{sweep}}) \\Rightarrow Ae^{-(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$\n$(t > t_{\\text{sweep}}) \\Rightarrow Ae^{(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$"
+	fit_eq   = "$(t < t_{s}) \\Rightarrow Ae^{-(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$\n$(t > t_{s}) \\Rightarrow Ae^{(t - t_0)/\\tau}\\sin(\\delta(t-t_0) + \\phi) + D$"
 
 	fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=4)
 	fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
