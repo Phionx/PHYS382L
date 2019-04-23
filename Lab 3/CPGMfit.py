@@ -101,7 +101,7 @@ def CPMG_func(x, *parameters):
 	ans    = -1.0*A*np.e**(-1.0*(t-t_0)/tau) + D
 	return ans
 	
-def pi_2_pulse_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func cause t = t_0
+def CPMG_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func cause t = t_0
 	t      = x
 	tau    = parameters[0] 
 	t_0    = parameters[1]
