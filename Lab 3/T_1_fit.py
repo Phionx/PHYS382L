@@ -6,6 +6,7 @@ import math
 import csv
 import scipy.special as special
 import scipy.signal as signal
+from random import randint
 
 
 # For displaying values
@@ -14,9 +15,40 @@ from decimal import Decimal
 #DATA PARSING
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #T,E,M,C,X  - Temperature, Energy, Magnetism, Specific Heat, Susceptibility
-name        = 'Data/20190416/t1/0416_s5_t1_'
-time_pulses = [.029, .058, .087, .116, .145, .174]
+current_date  = '20190423'
+savedata = False
+savefigs = True
+
+# concentration = .50
+# name          = 'Data/20190416/t1/0416_s5_t1_'
+# time_pulses = [.029, .058, .087, .116, .145, .174]
+# start_point = .0007
+
+# concentration = .60
+# name          = 'Data/20190416/t1/0416_s6_t1_'
+# time_pulses = [.022, .045, .067, .090, .112, .134]
+# start_point = .0007
+
+# concentration = .70
+# name          = 'Data/20190416/t1/0416_s7_t1_'
+# time_pulses = [.017, .034, .051, .068, .085, .102]
+# start_point = .00069
+
+
+# concentration = .80
+# name          = 'Data/20190416/t1/0416_s8_t1_'
+# time_pulses = [.014, .028, .042, .056, .070, .084]
+# start_point = .0006
+
+concentration = .90
+name          = 'Data/20190416/t1/0416_s9_t1_'
+time_pulses = [.008, .016, .024, .0335, .040, .048]
+start_point = .00045
 datafiles   = [name + str(int(1000*x)) + 'ms.csv' for x in time_pulses]
+datafiles[3]= name+'33_5'+'ms.csv'
+
+# datafiles   = [name + str(int(1000*x)) + 'ms.csv' for x in time_pulses]
+
 print(datafiles)
 num_files   = len(datafiles)
 
@@ -223,7 +255,7 @@ def pi_2_pulse_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func ca
 	return ans
 
 #-------------------------------------------------------------------------
-savefigs = False
+
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -534,7 +566,12 @@ peaks_T_2 = []
 #ADD FIRST PEAK
 # times_T_2.append(0.0)
 # peaks_T_2.append(exp_func(0.0, *Optimal_params))
+colors    = []
+for i in range(20):
+    colors.append('#%06X' % randint(0, 0xFFFFFF))
 
+plt.figure(1)
+plt.axvline(x=0.0)
 for iteration in range(num_files):
 	#PI PULSE FITTING (t < t_pulse):
 	time_pulse                = time_pulses[iteration]
@@ -548,29 +585,41 @@ for iteration in range(num_files):
 	
 
 	#TAKE RANGE OF TOTAL DATA TO FIT
-	start_index               = find_nearest(xdata_data, time_pulse + .0008)
+	start_index               = find_nearest(xdata_data, time_pulse + start_point)
 	end_index                 = find_nearest(xdata_data, time_pulse + .005)
 
 	xdata_fit                 = xdata_data[start_index:]
 	ydata_fit                 = ydata_data[start_index:]
 	yerror_fit                = yerror_data[start_index:]
 
+
+	# plt.errorbar(xdata_data, ydata_data, yerror_data, fmt=colors[iteration*2])
+	# plt.errorbar(xdata_fit, ydata_fit, yerror_fit, fmt=colors[iteration*2 + 1])
+	plt.axvline(x=time_pulse)
+	plt.ylim(-2.5, 4.5)
+	plt.xlim(-.002, .06)
+	plt.xlabel("Times (s)", fontsize=12)
+	plt.ylabel("$\\sigma_Y$ (V)", fontsize=12)
+	plt.title( "$\\sigma_Y$ vs Time (s) ($T_1$ fit)", fontsize=14)
 	plt.errorbar(xdata_data, ydata_data, yerror_data, fmt='b')
-	plt.errorbar(xdata_fit, ydata_fit, yerror_fit, fmt='r')
-	plt.show()
+	plt.errorbar(xdata_fit, ydata_fit, yerror_fit, fmt='g')
 
 	ydata_abs_fit  = [np.abs(y) for y in ydata_fit]
 	peak_ind = np.argmax(ydata_abs_fit)
 	times_T_2.append(xdata_fit[peak_ind])
 	peaks_T_2.append(ydata_fit[peak_ind])
+
 times_T_2 = np.array(times_T_2)
 peaks_T_2 = np.array(peaks_T_2)
-
-plt.plot(times_T_2, peaks_T_2, 'y.')
+peaks_err_T_2 = [.05 for x in range(len(peaks_T_2))]
+plt.errorbar(times_T_2, peaks_T_2, peaks_err_T_2, fmt='r')
+if (savefigs):
+		fig = plt.gcf()
+		fig.savefig("figs/" + "pulse_sequence_T_1" + ".png", dpi=500)
 plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
-fig_num=1
+fig_num=2
 #Fit T_2 DECOHERENCE
 #-----------------------------------------------------------------------------------------------------------------------------------------
 Estimate_tau    = 10.0
@@ -599,7 +648,7 @@ yerror_fit                = yerror_data[start_index:]
 popt, perr            = optimal_fit(function, xdata_fit, ydata_fit, yerror_fit, parameter_estimates, parameter_bound_ranges)
 Optimal_params        = [x for x in popt]
 Optimal_params_err    = [x for x in perr]
-Optimal_params_names  = ["$\\tau$", "$A$", "$D$"]
+Optimal_params_names  = ["$T_1$", "$A$", "$D$"]
 
 
 chi_square_min        = chi_square(function, xdata_fit, ydata_fit, yerror_fit, *Optimal_params)
@@ -611,8 +660,8 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "$\\sigma$ vs Time (sweeping $\\pi/2$ pulse apply time)"
-y_label  = "$\\sigma(t) = \\sqrt{\\sigma_x(t)^2 + \\sigma_y(t)^2}$ (V)"
+title    = "$\\sigma_Y$ vs Time (sweeping $\\pi/2$ pulse apply time)"
+y_label  = "$\\sigma_Y(t)$ (V)"
 x_label  = "Time $t$ (s)"
 # fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
 fit_eq   = "$-Ae^{-t/\\tau} + D$"
@@ -621,4 +670,14 @@ fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_para
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 
 plt.show()
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
+#SAVE DATA
+#-----------------------------------------------------------------------------------------------------------------------------------------
+row = [concentration, Optimal_params[0], Optimal_params_err[0]]
+if savedata:
+	with open('Analysis/' + current_date + '_T_1_fit.csv', 'a') as csvFile:
+		writer = csv.writer(csvFile)
+		writer.writerow(row)
+	csvFile.close()
 #-----------------------------------------------------------------------------------------------------------------------------------------

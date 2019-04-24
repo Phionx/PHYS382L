@@ -17,6 +17,9 @@ datafiles      = ['Data/20190418/CPMG_s5.csv','Data/20190418/CPMG_s6.csv', 'Data
 concentrations = [.50, .60, .70, .80, .90]
 concentrations = [x*100 for x in concentrations]
 num_files   = len(datafiles)
+savedata      = False #save concentration vs. decay constant T_2 data
+savefigs      = False
+current_date  = '20190423'
 
 times       = []
 sigma_Y     = []
@@ -124,7 +127,7 @@ def CPMG_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func cause t 
 	return ans
 
 #-------------------------------------------------------------------------
-savefigs = True
+
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -333,7 +336,7 @@ for iteration in range(num_files):
 	#SAVE RUN DATA
 	T_2_set.append(Optimal_params[0])        
 	T_2_err_set.append(Optimal_params_err[0])
-	concentration_set.append(concentration)
+	concentration_set.append(1.0*concentration*.01)
 	plt.show()
 	print("\tCPMG Fit: END\n")
 plt.figure(10)
@@ -346,4 +349,15 @@ if (savefigs):
 		fig.set_size_inches((15.5, 8.5), forward=False)
 		fig.savefig("figs/" + "tau vs Concentration" + ".png", dpi=500)
 plt.show()
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
+#SAVE DATA
+#-----------------------------------------------------------------------------------------------------------------------------------------
+rows = [[concentration_set[i], T_2_set[i], T_2_err_set[i]] for i in range(num_files)]
+if savedata:
+	for row in rows:
+		with open('Analysis/' + current_date + '_CPMG_fit.csv', 'a') as csvFile:
+			writer = csv.writer(csvFile)
+			writer.writerow(row)
+		csvFile.close()
 #-----------------------------------------------------------------------------------------------------------------------------------------

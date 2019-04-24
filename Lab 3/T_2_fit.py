@@ -13,14 +13,18 @@ from decimal import Decimal
 
 #DATA PARSING
 #-----------------------------------------------------------------------------------------------------------------------------------------
-#T,E,M,C,X  - Temperature, Energy, Magnetism, Specific Heat, Susceptibility
-datafiles   = ['Data/20190404/0404_3sec.csv', 'Data/20190404/0404_4sec.csv', 'Data/20190404/0404_5sec.csv', 'Data/20190404/0404_6sec.csv', 'Data/20190404/0404_7sec.csv', 'Data/20190404/0404_8sec.csv', 'Data/20190404/0404_9sec.csv']
-time_pulses = [.003, .004,.005,.006,.007,.008,.009]
-num_files   = len(datafiles)
+concentration = .9
+concentration_str = str(concentration)[1:]#str(.5) = '0.5'
+name          = 'Data/20190411/' + concentration_str + ' concentration/0411_s' + str(int(concentration*10)) + '_'
+time_pulses   = [.0001*x for x in range(40,105, 5)]
+datafiles     = [name + str(int(10000*x)) + '.csv' for x in time_pulses]
+
+num_files     = len(datafiles)
+savedata      = True
+savefigs      = False
+current_date  = '20190423'
 
 times     = []
-offset_X  = []
-offset_Y  = []
 sigma_X   = []
 sigma_Y   = []
 sigma     = []
@@ -223,7 +227,6 @@ def pi_2_pulse_err_func(x, xerr, *parameters): #the same as pi_pulse_err_func ca
 	return ans
 
 #-------------------------------------------------------------------------
-savefigs = False
 #Plotting
 def plot_fit(xdata, ydata, yerror, xtheory, ytheory, params, params_err, params_names, fig_num, **graph_labels):
 	x_label = graph_labels['x_label']
@@ -616,4 +619,14 @@ fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_para
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
 
 plt.show()
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
+#SAVE DATA
+#-----------------------------------------------------------------------------------------------------------------------------------------
+row = [concentration, Optimal_params[0], Optimal_params_err[0]]
+if savedata:
+	with open('Analysis/' + current_date + '_T_2_fit.csv', 'a') as csvFile:
+		writer = csv.writer(csvFile)
+		writer.writerow(row)
+	csvFile.close()
 #-----------------------------------------------------------------------------------------------------------------------------------------
