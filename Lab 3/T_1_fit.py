@@ -15,8 +15,8 @@ from decimal import Decimal
 #DATA PARSING
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #T,E,M,C,X  - Temperature, Energy, Magnetism, Specific Heat, Susceptibility
-current_date  = '20190423'
-savedata = False
+current_date  = '20190424'
+savedata = True
 savefigs = True
 
 # concentration = .50
@@ -598,9 +598,10 @@ for iteration in range(num_files):
 	plt.axvline(x=time_pulse)
 	plt.ylim(-2.5, 4.5)
 	plt.xlim(-.002, .06)
-	plt.xlabel("Times (s)", fontsize=12)
+	# plt.xlim(-.002, time_pulse+.02)
+	plt.xlabel("Times $t$ (s)", fontsize=12)
 	plt.ylabel("$\\sigma_Y$ (V)", fontsize=12)
-	plt.title( "$\\sigma_Y$ vs Time (s) ($T_1$ fit)", fontsize=14)
+	plt.title( "$\\sigma_Y$ vs Time (s) ($T_1$ fit) Concentration = " + str(int(100*concentration)) + "%", fontsize=14)
 	plt.errorbar(xdata_data, ydata_data, yerror_data, fmt='b')
 	plt.errorbar(xdata_fit, ydata_fit, yerror_fit, fmt='g')
 
@@ -615,7 +616,7 @@ peaks_err_T_2 = [.05 for x in range(len(peaks_T_2))]
 plt.errorbar(times_T_2, peaks_T_2, peaks_err_T_2, fmt='r')
 if (savefigs):
 		fig = plt.gcf()
-		fig.savefig("figs/" + "pulse_sequence_T_1" + ".png", dpi=500)
+		fig.savefig("figs/" + "pulse_sequence_T_1_concentration_" + str(int(100*concentration)) + ".png", dpi=500)
 plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -660,11 +661,11 @@ Optimal_params_names.append("Min Chi Square")
 xfit = xdata_fit
 yfit = function(xfit, *Optimal_params)
 
-title    = "$\\sigma_Y$ vs Time (sweeping $\\pi/2$ pulse apply time)"
-y_label  = "$\\sigma_Y(t)$ (V)"
+title    = "$\\sigma_Y$ Extrema vs Time Concentration = " + str(int(100*concentration)) + "%"
+y_label  = "$\\sigma_Y(t)$ Extrema (V)"
 x_label  = "Time $t$ (s)"
 # fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
-fit_eq   = "$-Ae^{-t/\\tau} + D$"
+fit_eq   = "$-Ae^{-t/T_1} + D$"
 
 fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=1)
 fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)

@@ -12,27 +12,43 @@ from decimal import Decimal
 
 #IMPORT DATA
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# datafile = 'Analysis/20190423_CPMG_fit.csv'
-# datafile = 'Analysis/20190423_T_1_fit.csv'
-datafile = 'Analysis/20190423_T_2_fit.csv'
-savefigs = False
+datafile = 'Analysis/20190424_T_1_fit.csv'
+ylabel = "$T_1$ (s)"
+title  = "$T_1$ vs Concentration"
+
+# datafile = 'Analysis/20190424_CPMG_fit.csv'
+# ylabel = "$T_2$ (s)"
+# title  = "$T_2$ vs Concentration"
+
+# datafile = 'Analysis/20190424_CPMG_fit_T_2_star.csv'
+# ylabel = "$T_2^*$ (s)"
+# title  = "$T_2^*$ vs Concentration"
+
+savefigs = True
 with open(datafile, 'r') as csvFile:
 	reader = csv.reader(csvFile)
 	reader = list(reader)
 csvFile.close()
 
-concentration_set = [float(row[0]) for row in reader]
-T_2_set           = [float(row[1]) for row in reader]
-T_2_err_set       = [float(row[2]) for row in reader]
+concentration_set = np.array([float(row[0]) for row in reader])
+T_2_set           = np.array([float(row[1]) for row in reader])
+T_2_err_set       = np.array([float(row[2]) for row in reader])
 
+
+print(concentration_set)
 
 plt.figure(10)
+# plt.ylim(0, max(T_2_set))
 plt.xlabel("Concentration (%)", fontsize=12)
-plt.ylabel("$\\tau$ (s)", fontsize=12)
-plt.title( "$\\tau$ vs Concentration", fontsize=14)
-plt.errorbar(concentration_set, T_2_set, fmt='g')
+plt.ylabel(ylabel, fontsize=12)
+plt.title( title, fontsize=14)
+# plt.errorbar(concentration_set, T_2_set, T_2_err_set, fmt='g')
+
+plt.plot(concentration_set, T_2_set, '--ko', markersize=3, color='r')#color='#3F7F4C')
+plt.fill_between(concentration_set, T_2_set-T_2_err_set, T_2_set+T_2_err_set, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
+
 if (savefigs):
 		fig = plt.gcf()
-		fig.set_size_inches((15.5, 8.5), forward=False)
-		fig.savefig("figs/" + "tau vs Concentration" + ".png", dpi=500)
-plt.show()
+		fig.savefig("figs/" + title + ".png", dpi=500)
+else:
+	plt.show()

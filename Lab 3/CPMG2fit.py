@@ -19,15 +19,9 @@ concentrations = [.50, .60, .70, .80, .90]
 time_pulses    = [.025,.025,.015,.015,.015]
 concentrations = [x*100 for x in concentrations]
 num_files   = len(datafiles)
-savedata      = False #save concentration vs. decay constant T_2 data
-savefigs      = False
-current_date  = '20190423'
-
-times       = []
-num_files     = len(datafiles)
-savedata      = True
-savefigs      = False
-current_date  = '20190423'
+savedata      = True #save concentration vs. decay constant T_2 data
+savefigs      = True
+current_date  = '20190424'
 
 times     = []
 sigma_X   = []
@@ -354,7 +348,11 @@ peaks_spread  = [None for x in range(num_files)]
 #Take just the peaks!
 #Store T_2* data
 #-----------------------------------------------------------------------------------------------------------------------------------------
+fig_num = 1
 for iteration in range(num_files):
+	concentration = concentrations[iteration]
+	plt.figure(fig_num)
+	fig_num += 1
 	#Take just the peaks!
 	time_pulse = time_pulses[iteration]
 	xdata_data = times[iteration]
@@ -421,10 +419,13 @@ for iteration in range(num_files):
 	plt.ylim(-0.5, 6)
 	plt.xlabel("Time $t$ (s)", fontsize=12)
 	plt.ylabel("$\\sigma(t) = \\sqrt{\\sigma_X(t)^2 + \\sigma_Y(t)^2}$ (s)", fontsize=12)
-	plt.title( "$\\sigma(t)$ vs Concentration", fontsize=14)
+	plt.title( "$\\sigma(t)$ vs Time (s) (CPMG fit) for Concentration = " + str(concentration) + "%", fontsize=14)
 	plt.errorbar(xdata_data, ydata_data, yerror_data, fmt='b')
 	plt.errorbar(xdata_fit, ydata_fit, yerror_fit, fmt='r')
 	plt.errorbar(xdata_data[peaks], ydata_data[peaks], yerror_data[peaks], fmt='r')
+	if (savefigs):
+		fig = plt.gcf()
+		fig.savefig("figs/" + "CPMG_pulse_sequence_concentration_" + str(concentration) + ".png", dpi=500)
 	plt.show()
 
 times = np.array(new_times)
@@ -440,7 +441,6 @@ sigma = np.array(new_sigma)
 #SORT by times
 #-----------------------------------------------------------------------------------------------------------------------------------------
 #Switch to peaks after T_2* data collection
-fig_num = 1
 T_2_star = []
 T_2_star_err = []
 #Fit T_2* Spreading
@@ -484,7 +484,7 @@ for iteration in range(num_files):
 	xfit = xdata_fit
 	yfit = function(xfit, *Optimal_params)
 
-	title    = "$\\sigma$ vs Time after $\\pi/2$ pulse ($T_2^*$ Fit) for concentration = " + str(concentration) + "%"
+	title    = "$\\sigma$ vs Time after $\\pi/2$ pulse ($T_2^*$ Fit) for Concentration = " + str(concentration) + "%"
 	y_label  = "$\\sigma(t) = \\sqrt{\\sigma_x(t)^2 + \\sigma_y(t)^2}$ (V)"
 	x_label  = "Time $t$ (s)"
 	# fit_eq   = "$\\hat{E}(T) = A*E(T) + B$"
@@ -570,10 +570,10 @@ for iteration in range(num_files):
 	xfit = xdata_fit
 	yfit = function(xfit, *Optimal_params)
 
-	title    = "$\\sigma(t)$ vs Time for concentration = " + str(concentration) + "%"
+	title    = "$\\sigma(t)$ vs Time for Concentration = " + str(concentration) + "%"
 	y_label  = "$\\sigma(t) = \\sqrt{\\sigma_X(t)^2 + \\sigma_Y(t)^2}$ (V)"
 	x_label  = "Time $t$ (s)"
-	fit_eq   = "$-Ae^{-(t)/T_2} + D$"
+	fit_eq   = "$-Ae^{-t/T_2} + D$"
 
 	xdata_data = xdata_data[:len(xdata_data)-1]
 	ydata_data = ydata_data[:len(ydata_data)-1]
@@ -596,11 +596,6 @@ for iteration in range(num_files):
 	plt.show()
 	print("\tCPMG Fit: END\n")
 
-if (savefigs):
-		fig = plt.gcf()
-		fig.set_size_inches((15.5, 8.5), forward=False)
-		fig.savefig("figs/" + "tau vs Concentration" + ".png", dpi=500)
-plt.show()
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #SAVE DATA
@@ -609,6 +604,14 @@ rows = [[concentration_set[i], T_2_set[i], T_2_err_set[i]] for i in range(num_fi
 if savedata:
 	for row in rows:
 		with open('Analysis/' + current_date + '_CPMG_fit.csv', 'a') as csvFile:
+			writer = csv.writer(csvFile)
+			writer.writerow(row)
+		csvFile.close()
+
+rows = [[concentration_set[i], T_2_star[i], T_2_star_err[i]] for i in range(num_files)]
+if savedata:
+	for row in rows:
+		with open('Analysis/' + current_date + '_CPMG_fit_T_2_star.csv', 'a') as csvFile:
 			writer = csv.writer(csvFile)
 			writer.writerow(row)
 		csvFile.close()
