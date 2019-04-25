@@ -12,17 +12,17 @@ from decimal import Decimal
 
 #IMPORT DATA
 #-----------------------------------------------------------------------------------------------------------------------------------------
-datafile = 'Analysis/20190424_T_1_fit.csv'
+datafile = 'Analysis/20190425_T_1_fit_visc.csv'
 ylabel = "$T_1$ (s)"
-title  = "$T_1$ vs Concentration"
+title  = "$T_1$ vs Viscosity"
 
-# datafile = 'Analysis/20190424_CPMG_fit.csv'
+# datafile = 'Analysis/20190425_CPMG_fit_visc.csv'
 # ylabel = "$T_2$ (s)"
-# title  = "$T_2$ vs Concentration"
+# title  = "$T_2$ vs Viscosity"
 
-# datafile = 'Analysis/20190424_CPMG_fit_T_2_star.csv'
+# datafile = 'Analysis/20190425_CPMG_fit_T_2_star_visc.csv'
 # ylabel = "$T_2^*$ (s)"
-# title  = "$T_2^*$ vs Concentration"
+# title  = "$T_2^*$ vs Viscosity"
 
 savefigs = True
 with open(datafile, 'r') as csvFile:
@@ -30,22 +30,22 @@ with open(datafile, 'r') as csvFile:
 	reader = list(reader)
 csvFile.close()
 
-concentration_set = np.array([float(row[0])*100 for row in reader])
+visc_set          = np.array([.00771, .0146, .0315, .0803, .260])
 T_2_set           = np.array([float(row[1]) for row in reader])
 T_2_err_set       = np.array([float(row[2]) for row in reader])
 
 
-print(concentration_set)
+print(visc_set)
 
 plt.figure(10)
 # plt.ylim(0, max(T_2_set))
-plt.xlabel("Concentration (%)", fontsize=12)
+plt.xlabel("Viscosity ($Ns/m^2$)", fontsize=12)
 plt.ylabel(ylabel, fontsize=12)
 plt.title( title, fontsize=14)
-# plt.errorbar(concentration_set, T_2_set, T_2_err_set, fmt='g')
+# plt.errorbar(visc_set, T_2_set, T_2_err_set, fmt='g')
 
-plt.plot(concentration_set, T_2_set, '--ko', markersize=3, color='r')#color='#3F7F4C')
-plt.fill_between(concentration_set, T_2_set-T_2_err_set, T_2_set+T_2_err_set, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
+plt.plot(visc_set, T_2_set, '--ko', markersize=3, color='r')#color='#3F7F4C')
+plt.fill_between(visc_set, T_2_set-T_2_err_set, T_2_set+T_2_err_set, alpha=.8, edgecolor='#3F7F4C', facecolor='#7EFF99', linewidth=0)
 
 if (savefigs):
 		fig = plt.gcf()
