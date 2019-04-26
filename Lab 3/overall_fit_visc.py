@@ -12,19 +12,19 @@ from decimal import Decimal
 
 #IMPORT DATA
 #-----------------------------------------------------------------------------------------------------------------------------------------
-datafile = 'Analysis/20190425_T_1_fit_visc.csv'
-ylabel = "$T_1$ (s)"
-title  = "$T_1$ vs Viscosity"
+# datafile = 'Analysis/20190425_T_1_fit_visc.csv'
+# ylabel = "$T_1$ (s)"
+# title  = "$T_1$ vs Viscosity"
 
 # datafile = 'Analysis/20190425_CPMG_fit_visc.csv'
 # ylabel = "$T_2$ (s)"
 # title  = "$T_2$ vs Viscosity"
 
-# datafile = 'Analysis/20190425_CPMG_fit_T_2_star_visc.csv'
-# ylabel = "$T_2^*$ (s)"
-# title  = "$T_2^*$ vs Viscosity"
+datafile = 'Analysis/20190425_CPMG_fit_T_2_star_visc.csv'
+ylabel = "$T_2^*$ (s)"
+title  = "$T_2^*$ vs Viscosity"
 
-savefigs = True
+savefigs = False
 with open(datafile, 'r') as csvFile:
 	reader = csv.reader(csvFile)
 	reader = list(reader)
