@@ -22,7 +22,7 @@ labels    = ["$T_1$", "$T_2^*$", "$T_2$", "$\\frac{1}{1/(2T_1) + 1/T_2^*}$"]
 ylabel = "$\\tau$ (s)"
 
 
-savefigs = True
+savefigs = False
 readers = [None for x in range(3)]
 
 for i in range(3):
