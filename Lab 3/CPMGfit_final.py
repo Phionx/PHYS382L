@@ -19,9 +19,9 @@ concentrations = [.50, .60, .70, .80, .90]
 time_pulses    = [.025,.025,.015,.015,.015]
 concentrations = [x*100 for x in concentrations]
 num_files   = len(datafiles)
-savedata      = False #save concentration vs. decay constant T_2 data
+savedata      = True #save concentration vs. decay constant T_2 data
 savefigs      = True
-current_date  = '20190424'
+current_date  = '20190502'
 
 times     = []
 sigma_X   = []
@@ -389,10 +389,10 @@ for iteration in range(num_files):
 
 	#TAKE RANGE OF TOTAL DATA TO FIT
 	if(time_pulse > .02):
-		start_index               = find_nearest(xdata_data, .0008)
+		start_index               = find_nearest(xdata_data, .0015)
 		end_index                 = find_nearest(xdata_data, time_pulse-.008)
 	else:
-		start_index               = find_nearest(xdata_data, .0008)
+		start_index               = find_nearest(xdata_data, .0015)
 		end_index                 = find_nearest(xdata_data, time_pulse-.0001)
 
 	print(time_pulse - .0001)
@@ -492,7 +492,7 @@ for iteration in range(num_files):
 
 	fig_num = plot_fit(xdata_data, ydata_data, yerror_data, xfit, yfit, Optimal_params, Optimal_params_err, Optimal_params_names, fig_num, title=title, x_label=x_label, y_label=y_label, fit_eq=fit_eq, custom_placement=1)
 	fig_num = plot_residuals(xdata_fit, ydata_fit, yerror_fit, xfit, yfit, fig_num, title=title, x_label=x_label, y_label=y_label)
-
+	plt.show()
 	#SAVE DATA
 	T_2_star.append(Optimal_params[0])
 	T_2_star_err.append(Optimal_params_err[0])

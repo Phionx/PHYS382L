@@ -20,11 +20,11 @@ from decimal import Decimal
 # ylabel = "$T_2$ (s)"
 # title  = "$T_2$ vs Concentration"
 
-datafile = 'Analysis/20190424_CPMG_fit_T_2_star.csv'
+datafile = 'Analysis/20190502_CPMG_fit_T_2_star.csv'
 ylabel = "$T_2^*$ (s)"
 title  = "$T_2^*$ vs Concentration"
 
-savefigs = False
+savefigs = True
 with open(datafile, 'r') as csvFile:
 	reader = csv.reader(csvFile)
 	reader = list(reader)
